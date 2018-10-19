@@ -1,0 +1,41 @@
+Encrypted Export
+
+Data Pump allows the export to be done in encrypted mode. This mode allows having the encrypted columns maintained in the dump file.
+There are different modes of the encryption available, i.e. dual, transparent and password.
+Also, you can decide where the encryption mode should be applied;
+for example, to the entire data and metadata (all), just the metadata (metadata_only) or none.
+
+The encryption modes of dual and transparent require the Oracle Wallet to be open and available and need the compatible mode of the database to be set to 11.0.0.
+The simplest mode is the password mode which needs the password to be supplied at the time of the export and the same password is needed with the import.
+Failing would lead to the import's failure.  Encryption requires the Advanced Security license option.
+
+Data Pump has the following encryption parameters:
+
+  *  encryption:  Is used to encrypt data before writing it to the dump file and accepts five values
+       <*>  all:  Enables encryption for both data and metadata of the exported objects
+       <*>  data_only:  Enables encryption for only data that is exported
+       <*>  encrypted_columns_only:  Enables encryption only for encrypted columns
+       <*>  metadata_only:  Enables encryption of the metadata of the exported objects
+       <*>  none:  Disables encryption of the data and metadata of the exported objects
+
+  *  encryption_algorithm:  Specifies the algorithm for the encryption and accepts three algorithms:
+       <*>  AES128:  The default value
+       <*>  AES192
+       <*>  AES256
+
+  *  encryption_mode:  Specifies the type of security and accepts the following values:
+       <*>  password:  Required to provide a password to encrypt the dump file
+       <*>  transparent:  Requires a wallet to use
+       <*>  dual:  Creates a dump file which might be imported using both the above mentioned modes
+       <*>  encryption_password:  Is used to provide a password for the dump file and differs between Oracle 10g and 11g.
+            If this parameter is used, then the encryption parameter's default value becomes ALL.
+	    If both parameters are omitted, then the encryption parameter is set to NONE. 
+
+
+In the following example, use all parameters to export data that is encrypted and password provided using the AES256 algorithm mode:
+
+expdp PIHIST/pihist dumpfile=exp_dir:test.dmp logfile=exp_dir:test.log encryption=all encryption_mode=password encryption_password=test encryption_algorithm=aes256
+impdp test/test remap_schema=pihist:test dumpfile=exp_dir:test.dmp logfile=exp_dir:imp.log encryption_password=test
+
+expdp PIHIST/pihist dumpfile=exp_dir:test.dmp logfile=exp_dir:test.log encryption=all encryption_mode=password encryption_password=pass
+impdp test/test remap_schema=pihist:test dumpfile=exp_dir:test.dmp logfile=exp_dir:imp.log encryption_password=pass

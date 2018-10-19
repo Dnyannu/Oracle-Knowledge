@@ -1,0 +1,768 @@
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG ;
+
+Starting backup at 14-JAN-14
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=39 RECID=37 STAMP=835960387
+input archived log thread=1 sequence=40 RECID=38 STAMP=835960599
+input archived log thread=1 sequence=41 RECID=39 STAMP=835960773
+input archived log thread=1 sequence=42 RECID=40 STAMP=836823646
+input archived log thread=1 sequence=43 RECID=41 STAMP=836824961
+input archived log thread=1 sequence=44 RECID=42 STAMP=836825370
+input archived log thread=1 sequence=45 RECID=43 STAMP=836825392
+input archived log thread=1 sequence=46 RECID=44 STAMP=836825510
+input archived log thread=1 sequence=47 RECID=45 STAMP=836825618
+input archived log thread=1 sequence=48 RECID=46 STAMP=836825729
+input archived log thread=1 sequence=49 RECID=47 STAMP=836825838
+input archived log thread=1 sequence=50 RECID=48 STAMP=836825862
+input archived log thread=1 sequence=51 RECID=49 STAMP=836825971
+input archived log thread=1 sequence=52 RECID=50 STAMP=836827961
+input archived log thread=1 sequence=53 RECID=51 STAMP=836828067
+input archived log thread=1 sequence=54 RECID=52 STAMP=836833928
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA10OU24KA_1_1 tag=TAG20140114T135208 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:15
+Finished backup at 14-JAN-14
+
+Starting backup at 14-JAN-14
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00001 name=C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+input datafile file number=00002 name=C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+input datafile file number=00003 name=C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+input datafile file number=00007 name=C:\APP\ORADATA\MEGATRON\MGMT.DBF
+input datafile file number=00008 name=C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+input datafile file number=00005 name=C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+input datafile file number=00006 name=C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+input datafile file number=00004 name=C:\APP\ORADATA\MEGATRON\USERS01.DBF
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA11OU24KS_1_1 tag=TAG20140114T135227 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:01:25
+Finished backup at 14-JAN-14
+
+Starting backup at 14-JAN-14
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=55 RECID=53 STAMP=836834035
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA12OU24NK_1_1 tag=TAG20140114T135355 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 14-JAN-14
+
+Starting Control File and SPFILE Autobackup at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01 comment=NONE
+Finished Control File and SPFILE Autobackup at 14-JAN-14
+
+RMAN> exit
+
+
+Recovery Manager complete.
+
+SQL> drop database;
+drop database
+*
+ERROR at line 1:
+ORA-01586: database must be mounted EXCLUSIVE and not open for this operation
+
+
+SQL> shu immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL>
+SQL>
+SQL>
+SQL>
+SQL>  startup mount exclusive restrict
+ORACLE instance started.
+
+Total System Global Area  535662592 bytes
+Fixed Size                  1375792 bytes
+Variable Size             381682128 bytes
+Database Buffers          138412032 bytes
+Redo Buffers               14192640 bytes
+Database mounted.
+SQL>
+SQL>
+SQL>
+SQL> drop database;
+
+Database dropped.
+
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+SQL>
+SQL> exit
+
+C:\>sqlplus sys/qwerty as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Tue Jan 14 13:57:50 2014
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+SQL> exit
+Disconnected
+
+C:\>rman target sys
+
+Recovery Manager: Release 11.2.0.1.0 - Production on Tue Jan 14 13:58:05 2014
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+target database Password:
+connected to target database (not started)
+
+RMAN> startup nomount
+
+startup failed: ORA-01078: failure in processing system parameters
+LRM-00109: could not open parameter file 'C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\INITMEGATRON.ORA'
+
+starting Oracle instance without parameter file for retrieval of spfile
+Oracle instance started
+
+Total System Global Area     159019008 bytes
+
+Fixed Size                     1373264 bytes
+Variable Size                 75500464 bytes
+Database Buffers              75497472 bytes
+Redo Buffers                   6647808 bytes
+
+RMAN> show controlfile autobackup format;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name DUMMY are:
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+
+RMAN>
+
+RMAN> set controlfile autobackup format for device type disk to 'C:\app\rman_bkp\%F';
+
+executing command: SET CONTROLFILE AUTOBACKUP FORMAT
+
+RMAN> exit
+
+
+Recovery Manager complete.
+
+C:\>rman target sys
+
+Recovery Manager: Release 11.2.0.1.0 - Production on Tue Jan 14 14:09:40 2014
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+target database Password:
+connected to target database: DUMMY (not mounted)
+
+RMAN>
+
+RMAN>
+
+RMAN> restore spfile from 'C:\app\rman_bkp\CONTROLC-792710905-20140114-01';
+
+Starting restore at 14-JAN-14
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=96 device type=DISK
+
+channel ORA_DISK_1: restoring spfile from AUTOBACKUP C:\app\rman_bkp\CONTROLC-792710905-20140114-01
+channel ORA_DISK_1: SPFILE restore from AUTOBACKUP complete
+Finished restore at 14-JAN-14
+
+RMAN>
+
+RMAN> restore controlfile from 'C:\app\rman_bkp\CONTROLC-792710905-20140114-01';
+
+Starting restore at 14-JAN-14
+using channel ORA_DISK_1
+
+channel ORA_DISK_1: restoring control file
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:01
+output file name=C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\CTL1MEGATRON.ORA
+Finished restore at 14-JAN-14
+
+RMAN>
+
+RMAN>
+
+RMAN> shutdown abort;
+
+Oracle instance shut down
+
+RMAN>
+
+RMAN> startup nomount;
+
+connected to target database (not started)
+Oracle instance started
+
+Total System Global Area     535662592 bytes
+
+Fixed Size                     1375792 bytes
+Variable Size                381682128 bytes
+Database Buffers             138412032 bytes
+Redo Buffers                  14192640 bytes
+
+RMAN>
+
+RMAN>exit;
+
+SQL> create pfile from spfile;
+
+File created.
+
+##################################
+# Change following para in pfile #
+#      control_files parameter   #
+# check compatible, must be same #
+##################################
+
+SQL> create spfile from pfile;
+
+File created.
+
+RMAN> shutdown abort;
+
+Oracle instance shut down
+
+RMAN>
+
+RMAN>
+
+RMAN> startup mount;
+
+connected to target database (not started)
+Oracle instance started
+database mounted
+
+Total System Global Area     535662592 bytes
+
+Fixed Size                     1375792 bytes
+Variable Size                381682128 bytes
+Database Buffers             138412032 bytes
+Redo Buffers                  14192640 bytes
+
+RMAN>
+
+RMAN> catalog start with 'C:\app\rman_bkp\';
+
+Starting implicit crosscheck backup at 14-JAN-14
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=394 device type=DISK
+Crosschecked 3 objects
+Finished implicit crosscheck backup at 14-JAN-14
+
+Starting implicit crosscheck copy at 14-JAN-14
+using channel ORA_DISK_1
+Finished implicit crosscheck copy at 14-JAN-14
+
+searching for all files in the recovery area
+cataloging files...
+no files cataloged
+
+searching for all files that match the pattern C:\app\rman_bkp\
+
+List of Files Unknown to the Database
+=====================================
+File Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01
+
+Do you really want to catalog the above files (enter YES or NO)? YES
+cataloging files...
+cataloging done
+
+List of Cataloged Files
+=======================
+File Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01
+
+RMAN>
+
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT 'C:\app\rman_bkp\data%U';
+
+old RMAN configuration parameters:
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   'C:\app\rman_bkp\data%U';
+new RMAN configuration parameters:
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   'C:\app\rman_bkp\data%U';
+new RMAN configuration parameters are successfully stored
+released channel: ORA_DISK_1
+
+RMAN> catalog start with 'C:\app\rman_bkp\';
+
+searching for all files that match the pattern C:\app\rman_bkp\
+
+List of Files Unknown to the Database
+=====================================
+File Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01
+
+Do you really want to catalog the above files (enter YES or NO)? YES
+cataloging files...
+cataloging done
+
+List of Cataloged Files
+=======================
+File Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01
+
+RMAN>
+
+RMAN> restore database;
+
+Starting restore at 14-JAN-14
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=394 device type=DISK
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00001 to C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+channel ORA_DISK_1: restoring datafile 00002 to C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+channel ORA_DISK_1: restoring datafile 00003 to C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+channel ORA_DISK_1: restoring datafile 00004 to C:\APP\ORADATA\MEGATRON\USERS01.DBF
+channel ORA_DISK_1: restoring datafile 00005 to C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+channel ORA_DISK_1: restoring datafile 00006 to C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+channel ORA_DISK_1: restoring datafile 00007 to C:\APP\ORADATA\MEGATRON\MGMT.DBF
+channel ORA_DISK_1: restoring datafile 00008 to C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+channel ORA_DISK_1: reading from backup piece C:\APP\RMAN_BKP\DATA11OU24KS_1_1
+channel ORA_DISK_1: piece handle=C:\APP\RMAN_BKP\DATA11OU24KS_1_1 tag=TAG20140114T135227
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:01:56
+Finished restore at 14-JAN-14
+
+RMAN>  RECOVER DATABASE;
+
+Starting recover at 14-JAN-14
+using channel ORA_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 55 is already on disk as file C:\APP\ARCHIVE\MEGATRON_0000000055_0833194237_0001.ARC
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000055_0833194237_0001.ARC thread=1 sequence=55
+unable to find archived log
+archived log thread=1 sequence=56
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 01/14/2014 14:28:23
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 56 and starting SCN of 1700161
+
+RMAN> alter database open resetlogs;
+
+database opened
+
+RMAN> report schema;
+
+Report of database schema for database with db_unique_name MEGATRON
+
+List of Permanent Datafiles
+===========================
+File Size(MB) Tablespace           RB segs Datafile Name
+---- -------- -------------------- ------- ------------------------
+1    730      SYSTEM               ***     C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+2    490      SYSAUX               ***     C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+3    300      UNDOTBS1             ***     C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+4    5        USERS                ***     C:\APP\ORADATA\MEGATRON\USERS01.DBF
+5    100      EXAMPLE              ***     C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+6    20       MGMT_ECM_DEPOT_TS    ***     C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+7    250      MGMT_TABLESPACE      ***     C:\APP\ORADATA\MEGATRON\MGMT.DBF
+8    200      MGMT_AD4J_TS         ***     C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+
+List of Temporary Files
+=======================
+File Size(MB) Tablespace           Maxsize(MB) Tempfile Name
+---- -------- -------------------- ----------- --------------------
+1    20       TEMP                 32767       C:\APP\ORADATA\MEGATRON\TEMP01.DBF
+
+RMAN>
+
+RMAN> report need backup;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+Report of files with less than 1 redundant backups
+File #bkps Name
+---- ----- -----------------------------------------------------
+
+RMAN>
+
+RMAN> show all;
+
+RMAN configuration parameters for database with db_unique_name MEGATRON are:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 1; # default
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP ON;
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'C:\app\rman_bkp\control%F';
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   'C:\app\rman_bkp\data%U';
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO 'C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SNCFMEGATRON.ORA'; # default
+
+RMAN>
+
+RMAN>
+
+RMAN>
+
+RMAN> crosscheck archivelog all;
+
+released channel: ORA_DISK_1
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=394 device type=DISK
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000004_0833194237_0001.ARC RECID=2 STAMP=834419701
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000005_0833194237_0001.ARC RECID=3 STAMP=834420781
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000006_0833194237_0001.ARC RECID=4 STAMP=834425962
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000007_0833194237_0001.ARC RECID=5 STAMP=834490501
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000008_0833194237_0001.ARC RECID=6 STAMP=834490863
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000009_0833194237_0001.ARC RECID=7 STAMP=834494427
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000010_0833194237_0001.ARC RECID=8 STAMP=834503894
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000011_0833194237_0001.ARC RECID=9 STAMP=834503924
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000012_0833194237_0001.ARC RECID=10 STAMP=834503948
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000013_0833194237_0001.ARC RECID=11 STAMP=834503973
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000014_0833194237_0001.ARC RECID=12 STAMP=834504005
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000015_0833194237_0001.ARC RECID=13 STAMP=834504153
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000016_0833194237_0001.ARC RECID=14 STAMP=834508162
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000017_0833194237_0001.ARC RECID=15 STAMP=834508207
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000018_0833194237_0001.ARC RECID=16 STAMP=834508259
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000019_0833194237_0001.ARC RECID=17 STAMP=834508296
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000020_0833194237_0001.ARC RECID=18 STAMP=834508353
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000021_0833194237_0001.ARC RECID=19 STAMP=834508414
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000022_0833194237_0001.ARC RECID=20 STAMP=834508462
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000023_0833194237_0001.ARC RECID=21 STAMP=834508501
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000024_0833194237_0001.ARC RECID=22 STAMP=834508577
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000025_0833194237_0001.ARC RECID=23 STAMP=834508665
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000026_0833194237_0001.ARC RECID=24 STAMP=834508730
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000027_0833194237_0001.ARC RECID=25 STAMP=834508766
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000028_0833194237_0001.ARC RECID=26 STAMP=834508835
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000029_0833194237_0001.ARC RECID=27 STAMP=834508883
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000030_0833194237_0001.ARC RECID=28 STAMP=834508964
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000031_0833194237_0001.ARC RECID=29 STAMP=834509021
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000032_0833194237_0001.ARC RECID=30 STAMP=834509109
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000033_0833194237_0001.ARC RECID=31 STAMP=834509133
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000034_0833194237_0001.ARC RECID=32 STAMP=834509248
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000035_0833194237_0001.ARC RECID=33 STAMP=834513345
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000036_0833194237_0001.ARC RECID=34 STAMP=835871294
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000037_0833194237_0001.ARC RECID=35 STAMP=835873122
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000038_0833194237_0001.ARC RECID=36 STAMP=835873129
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000039_0833194237_0001.ARC RECID=37 STAMP=835960387
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000040_0833194237_0001.ARC RECID=38 STAMP=835960599
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000041_0833194237_0001.ARC RECID=39 STAMP=835960773
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000042_0833194237_0001.ARC RECID=40 STAMP=836823646
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000043_0833194237_0001.ARC RECID=41 STAMP=836824961
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000044_0833194237_0001.ARC RECID=42 STAMP=836825370
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000045_0833194237_0001.ARC RECID=43 STAMP=836825392
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000046_0833194237_0001.ARC RECID=44 STAMP=836825510
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000047_0833194237_0001.ARC RECID=45 STAMP=836825618
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000048_0833194237_0001.ARC RECID=46 STAMP=836825729
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000049_0833194237_0001.ARC RECID=47 STAMP=836825838
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000050_0833194237_0001.ARC RECID=48 STAMP=836825862
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000051_0833194237_0001.ARC RECID=49 STAMP=836825971
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000052_0833194237_0001.ARC RECID=50 STAMP=836827961
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000053_0833194237_0001.ARC RECID=51 STAMP=836828067
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000054_0833194237_0001.ARC RECID=52 STAMP=836833928
+validation failed for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000055_0833194237_0001.ARC RECID=53 STAMP=836834035
+validation succeeded for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000001_0836836400_0001.ARC RECID=54 STAMP=836836431
+validation succeeded for archived log
+archived log file name=C:\APP\ARCHIVE\MEGATRON_0000000002_0836836400_0001.ARC RECID=55 STAMP=836836649
+Crosschecked 54 objects
+
+
+RMAN>
+
+RMAN> backup database plus archivelog;
+
+
+Starting backup at 14-JAN-14
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=1 RECID=54 STAMP=836836431
+input archived log thread=1 sequence=2 RECID=55 STAMP=836836649
+input archived log thread=1 sequence=3 RECID=56 STAMP=836836708
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA16OU27B5_1_1 tag=TAG20140114T143828 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 14-JAN-14
+
+Starting backup at 14-JAN-14
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00001 name=C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+input datafile file number=00002 name=C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+input datafile file number=00003 name=C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+input datafile file number=00007 name=C:\APP\ORADATA\MEGATRON\MGMT.DBF
+input datafile file number=00008 name=C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+input datafile file number=00005 name=C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+input datafile file number=00006 name=C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+input datafile file number=00004 name=C:\APP\ORADATA\MEGATRON\USERS01.DBF
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA17OU27B7_1_1 tag=TAG20140114T143831 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:01:35
+Finished backup at 14-JAN-14
+
+Starting backup at 14-JAN-14
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=4 RECID=57 STAMP=836836808
+channel ORA_DISK_1: starting piece 1 at 14-JAN-14
+channel ORA_DISK_1: finished piece 1 at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\DATA18OU27E8_1_1 tag=TAG20140114T144008 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 14-JAN-14
+
+Starting Control File and SPFILE Autobackup at 14-JAN-14
+piece handle=C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-03 comment=NONE
+Finished Control File and SPFILE Autobackup at 14-JAN-14
+
+RMAN>
+
+RMAN> list backup;
+
+
+List of Backup Sets
+===================
+
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+17      Full    1.18G      DISK        00:01:23     14-JAN-14
+        BP Key: 17   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T135227
+        Piece Name: C:\APP\RMAN_BKP\DATA11OU24KS_1_1
+  List of Datafiles in backup set 17
+  File LV Type Ckp SCN    Ckp Time  Name
+  ---- -- ---- ---------- --------- ----
+  1       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+  2       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+  3       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+  4       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\USERS01.DBF
+  5       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+  6       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+  7       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT.DBF
+  8       Full 1700088    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+19      Full    9.55M      DISK        00:00:09     14-JAN-14
+        BP Key: 19   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T143412
+        Piece Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-02
+  SPFILE Included: Modification time: 14-JAN-14
+  SPFILE db_unique_name: MEGATRON
+  Control File Included: Ckp SCN: 1700290      Ckp time: 14-JAN-14
+
+BS Key  Size       Device Type Elapsed Time Completion Time
+------- ---------- ----------- ------------ ---------------
+20      588.50K    DISK        00:00:00     14-JAN-14
+        BP Key: 20   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T143828
+        Piece Name: C:\APP\RMAN_BKP\DATA16OU27B5_1_1
+
+  List of Archived Logs in backup set 20
+  Thrd Seq     Low SCN    Low Time  Next SCN   Next Time
+  ---- ------- ---------- --------- ---------- ---------
+  1    1       1700162    14-JAN-14 1700165    14-JAN-14
+  1    2       1700165    14-JAN-14 1701104    14-JAN-14
+  1    3       1701104    14-JAN-14 1701198    14-JAN-14
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+21      Full    1.21G      DISK        00:01:27     14-JAN-14
+        BP Key: 21   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T143831
+        Piece Name: C:\APP\RMAN_BKP\DATA17OU27B7_1_1
+  List of Datafiles in backup set 21
+  File LV Type Ckp SCN    Ckp Time  Name
+  ---- -- ---- ---------- --------- ----
+  1       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\SYSTEM01.DBF
+  2       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\SYSAUX01.DBF
+  3       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\UNDOTBS01.DBF
+  4       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\USERS01.DBF
+  5       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\EXAMPLE01.DBF
+  6       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT_ECM_DEPOT1.DBF
+  7       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT.DBF
+  8       Full 1701205    14-JAN-14 C:\APP\ORADATA\MEGATRON\MGMT_AD4J.DBF
+
+BS Key  Size       Device Type Elapsed Time Completion Time
+------- ---------- ----------- ------------ ---------------
+22      42.00K     DISK        00:00:01     14-JAN-14
+        BP Key: 22   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T144008
+        Piece Name: C:\APP\RMAN_BKP\DATA18OU27E8_1_1
+
+  List of Archived Logs in backup set 22
+  Thrd Seq     Low SCN    Low Time  Next SCN   Next Time
+  ---- ------- ---------- --------- ---------- ---------
+  1    4       1701198    14-JAN-14 1701302    14-JAN-14
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+23      Full    9.55M      DISK        00:00:02     14-JAN-14
+        BP Key: 23   Status: AVAILABLE  Compressed: NO  Tag: TAG20140114T144010
+        Piece Name: C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-03
+  SPFILE Included: Modification time: 14-JAN-14
+  SPFILE db_unique_name: MEGATRON
+  Control File Included: Ckp SCN: 1701311      Ckp time: 14-JAN-14
+
+RMAN>
+
+RMAN>
+
+RMAN> report need backup;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+Report of files with less than 1 redundant backups
+File #bkps Name
+---- ----- -----------------------------------------------------
+
+RMAN>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

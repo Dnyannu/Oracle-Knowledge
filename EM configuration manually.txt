@@ -1,0 +1,272 @@
+bash-3.00$ echo $ORACLE_SID
+TESTDB
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ lsnrctl status
+
+LSNRCTL for Solaris: Version 11.2.0.1.0 - Production on 05-OCT-2013 22:57:25
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=TESTSER)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Solaris: Version 11.2.0.1.0 - Production
+Start Date                05-OCT-2013 22:54:51
+Uptime                    0 days 0 hr. 2 min. 34 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /export/home/oracle/app/oracle/diag/tnslsnr/TESTSER/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=TESTSER)(PORT=1521)))
+Services Summary...
+Service "TESTDB" has 1 instance(s).
+  Instance "TESTDB", status READY, has 1 handler(s) for this service...
+Service "TESTDBXDB" has 1 instance(s).
+  Instance "TESTDB", status READY, has 1 handler(s) for this service...
+The command completed successfully
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ echo $ORACLE_UNQNAME
+
+bash-3.00$
+bash-3.00$export ORACLE_UNQNAME=TESTDB
+bash-3.00$
+bash-3.00$ echo $ORACLE_UNQNAME
+TESTDB
+bash-3.00$
+bash-3.00$
+bash-3.00$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sat Oct 5 22:52:14 2013
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> @user
+
+USERNAME                       CREATED   Default                   TEMP            STATUS             LOCK_DATE EXPIRY_DA
+------------------------------ --------- ------------------------- --------------- ------------------ --------- ---------
+ANONYMOUS                      05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APEX_030200                    05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APEX_PUBLIC_USER               05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APPQOSSYS                      05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+DBSNMP                         05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+DIP                            05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+EXFSYS                         05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+FLOWS_FILES                    05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+MDSYS                          05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORACLE_OCM                     05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDDATA                        05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDPLUGINS                     05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDSYS                         05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+OUTLN                          05-OCT-13 SYSTEM                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+SI_INFORMTN_SCHEMA             05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+SYS                            05-OCT-13 SYSTEM                    TEMP            OPEN                         03-APR-14
+SYSTEM                         05-OCT-13 SYSTEM                    TEMP            OPEN                         03-APR-14
+WMSYS                          05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+XDB                            05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+XS$NULL                        05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+
+20 rows selected.
+
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ emctl status agent
+EM Configuration issue. /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/TESTSER_TESTDB not found.
+bash-3.00$
+bash-3.00$ emctl status dbconsole
+OC4J Configuration issue. /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/oc4j/j2ee/OC4J_DBConsole_TESTSER_TESTDB not found.
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ emca -repos create
+
+STARTED EMCA at Oct 5, 2013 10:57:34 PM
+EM Configuration Assistant, Version 11.2.0.0.2 Production
+Copyright (c) 2003, 2005, Oracle.  All rights reserved.
+
+Enter the following information:
+Database SID: TESTDB
+Listener port number: 1521
+Password for SYS user:
+Password for SYSMAN user:
+
+Do you wish to continue? [yes(Y)/no(N)]: y
+Oct 5, 2013 10:58:00 PM oracle.sysman.emcp.EMConfig perform
+INFO: This operation is being logged at /export/home/oracle/app/oracle/cfgtoollogs/emca/TESTDB/emca_2013_10_05_22_57_33.log.
+Oct 5, 2013 10:58:01 PM oracle.sysman.emcp.EMReposConfig createRepository
+INFO: Creating the EM repository (this may take a while) ...
+Oct 5, 2013 11:04:57 PM oracle.sysman.emcp.EMReposConfig invoke
+INFO: Repository successfully created
+Enterprise Manager configuration completed successfully
+FINISHED EMCA at Oct 5, 2013 11:04:57 PM
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ emca -config dbcontrol db
+
+STARTED EMCA at Oct 5, 2013 11:05:28 PM
+EM Configuration Assistant, Version 11.2.0.0.2 Production
+Copyright (c) 2003, 2005, Oracle.  All rights reserved.
+
+Enter the following information:
+Database SID: TESTDB
+Listener port number: 1521
+Listener ORACLE_HOME [ /export/home/oracle/app/oracle/product/11.2.0/dbhome_1 ]: /export/home/oracle/app/oracle/product/11.2.0/dbhome_1
+Password for SYS user:
+Password for DBSNMP user:
+Password for SYSMAN user:
+Email address for notifications (optional): null
+Invalid email.
+Email address for notifications (optional):
+Outgoing Mail (SMTP) server for notifications (optional):
+-----------------------------------------------------------------
+
+You have specified the following settings
+
+Database ORACLE_HOME ................ /export/home/oracle/app/oracle/product/11.2.0/dbhome_1
+
+Local hostname ................ TESTSER
+Listener ORACLE_HOME ................ /export/home/oracle/app/oracle/product/11.2.0/dbhome_1
+Listener port number ................ 1521
+Database SID ................ TESTDB
+Email address for notifications ...............
+Outgoing Mail (SMTP) server for notifications ...............
+
+-----------------------------------------------------------------
+Do you wish to continue? [yes(Y)/no(N)]: Y
+Oct 5, 2013 11:06:17 PM oracle.sysman.emcp.EMConfig perform
+INFO: This operation is being logged at /export/home/oracle/app/oracle/cfgtoollogs/emca/TESTDB/emca_2013_10_05_23_05_27.log.
+Oct 5, 2013 11:06:27 PM oracle.sysman.emcp.EMReposConfig uploadConfigDataToRepository
+INFO: Uploading configuration data to EM repository (this may take a while) ...
+Oct 5, 2013 11:07:43 PM oracle.sysman.emcp.EMReposConfig invoke
+INFO: Uploaded configuration data successfully
+Oct 5, 2013 11:07:59 PM oracle.sysman.emcp.util.DBControlUtil configureSoftwareLib
+INFO: Software library configured successfully.
+Oct 5, 2013 11:07:59 PM oracle.sysman.emcp.EMDBPostConfig configureSoftwareLibrary
+INFO: Deploying Provisioning archives ...
+Oct 5, 2013 11:08:42 PM oracle.sysman.emcp.EMDBPostConfig configureSoftwareLibrary
+INFO: Provisioning archives deployed successfully.
+Oct 5, 2013 11:08:42 PM oracle.sysman.emcp.util.DBControlUtil secureDBConsole
+INFO: Securing Database Control (this may take a while) ...
+Oct 5, 2013 11:08:51 PM oracle.sysman.emcp.util.DBControlUtil secureDBConsole
+INFO: Database Control secured successfully.
+Oct 5, 2013 11:08:51 PM oracle.sysman.emcp.util.DBControlUtil startOMS
+INFO: Starting Database Control (this may take a while) ...
+Oct 5, 2013 11:11:00 PM oracle.sysman.emcp.EMDBPostConfig performConfiguration
+INFO: Database Control started successfully
+Oct 5, 2013 11:11:04 PM oracle.sysman.emcp.EMDBPostConfig performConfiguration
+INFO: >>>>>>>>>>> The Database Control URL is https://TESTSER:1158/em <<<<<<<<<<<
+Oct 5, 2013 11:11:20 PM oracle.sysman.emcp.EMDBPostConfig invoke
+WARNING:
+************************  WARNING  ************************
+
+Management Repository has been placed in secure mode wherein Enterprise Manager data will be encrypted.  The encryption key has been placed in the file: /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/TESTSER_TESTDB/sysman/config/emkey.ora.   Please ensure this file is backed up as the encrypted data will become unusable if this file is lost.
+
+***********************************************************
+Enterprise Manager configuration completed successfully
+FINISHED EMCA at Oct 5, 2013 11:11:21 PM
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$
+ash-3.00$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sat Oct 5 22:52:14 2013
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> @user
+
+USERNAME                       CREATED   Default                   TEMP            STATUS             LOCK_DATE EXPIRY_DA
+------------------------------ --------- ------------------------- --------------- ------------------ --------- ---------
+ANONYMOUS                      05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APEX_030200                    05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APEX_PUBLIC_USER               05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+APPQOSSYS                      05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+DBSNMP                         05-OCT-13 SYSAUX                    TEMP            OPEN                         03-APR-14
+DIP                            05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+EXFSYS                         05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+FLOWS_FILES                    05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+MDSYS                          05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+MGMT_VIEW                      05-OCT-13 SYSTEM                    TEMP            OPEN                         03-APR-14
+ORACLE_OCM                     05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDDATA                        05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDPLUGINS                     05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+ORDSYS                         05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+OUTLN                          05-OCT-13 SYSTEM                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+SI_INFORMTN_SCHEMA             05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+SYS                            05-OCT-13 SYSTEM                    TEMP            OPEN                         03-APR-14
+SYSMAN                         05-OCT-13 SYSAUX                    TEMP            OPEN                         03-APR-14
+SYSTEM                         05-OCT-13 SYSTEM                    TEMP            OPEN                         03-APR-14
+WMSYS                          05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+XDB                            05-OCT-13 SYSAUX                    TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+XS$NULL                        05-OCT-13 USERS                     TEMP            EXPIRED & LOCKED   05-OCT-13 05-OCT-13
+
+22 rows selected.
+
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$
+bash-3.00$ emctl status agent
+Oracle Enterprise Manager 11g Database Control Release 11.2.0.1.0
+Copyright (c) 1996, 2009 Oracle Corporation.  All rights reserved.
+---------------------------------------------------------------
+Agent Version     : 10.2.0.4.2
+OMS Version       : 10.2.0.4.2
+Protocol Version  : 10.2.0.4.2
+Agent Home        : /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/TESTSER_TESTDB
+Agent binaries    : /export/home/oracle/app/oracle/product/11.2.0/dbhome_1
+Agent Process ID  : 6037
+Parent Process ID : 6026
+Agent URL         : https://TESTSER:3938/emd/main
+Repository URL    : https://TESTSER:1158/em/upload/
+Started at        : 2013-10-05 23:08:53
+Started by user   : oracle
+Last Reload       : 2013-10-05 23:08:53
+Last successful upload                       : 2013-10-05 23:11:17
+Total Megabytes of XML files uploaded so far :     9.92
+Number of XML files pending upload           :        0
+Size of XML files pending upload(MB)         :     0.00
+Available disk space on upload filesystem    :    38.12%
+Data channel upload directory                : /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/TESTSER_TESTDB/sysman/recv
+Last successful heartbeat to OMS             : 2013-10-05 23:11:33
+---------------------------------------------------------------
+Agent is Running and Ready
+bash-3.00$
+bash-3.00$
+bash-3.00$ emctl status dbconsole
+Oracle Enterprise Manager 11g Database Control Release 11.2.0.1.0
+Copyright (c) 1996, 2009 Oracle Corporation.  All rights reserved.
+https://TESTSER:1158/em/console/aboutApplication
+Oracle Enterprise Manager 11g is running.
+------------------------------------------------------------------
+Logs are generated in directory /export/home/oracle/app/oracle/product/11.2.0/dbhome_1/TESTSER_TESTDB/sysman/log
+bash-3.00$
+bash-3.00$
+bash-3.00$

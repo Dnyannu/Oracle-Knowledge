@@ -1,0 +1,89 @@
+on PROD
+==========
+run {
+allocate channel d1 type disk;
+allocate channel d2 type disk;
+backup format '/oradata/rmanbkp/df_t%t_s%s_p%p' database;
+sql 'alter system archive log current';
+backup format '/oradata/rmanbkp/al_t%t_s%s_p%p' archivelog all;
+backup current controlfile for standby format '/oradata/rmanbkp/sb_t%t_s%s_p%p';
+release channel d1;
+release channel d2;
+}
+
+
+
+on standby
+==========
+copy pfile from PROD and create necesary directories
+
+sqlplus / as sysdba
+startup nomount;
+
+rman target sys/sys@dnyannu_DR auxiliary /
+
+run {
+allocate channel C1 device type disk;
+allocate channel C2 device type disk;
+allocate auxiliary channel C3 device type disk;
+allocate auxiliary channel C4 device type disk;
+duplicate target database for standby nofilenamecheck;
+release channel C1;
+release channel C2;
+release channel C3;
+release channel C4;
+}
+
+
+
+
+*.db_unique_name=TEST123
+*.standby_file_management='AUTO'
+*.log_archive_dest_2='SERVICE=TEST_DR arch noaffirm'
+*.fal_client=DNYANNU_PROD
+*.fal_server=DNYANNU_DR
+
+
+
+
+
+alter database mount standby database;
+alter system set log_archive_dest_state_2=DEFER;
+recover standby database; ==> AUTO
+OR
+alter database recover managed standby database disconnect from session;
+
+above command will recover the archive from prod archive after disconnect from session also
+
+
+
+alter system set log_archive_dest_1='LOCATION=/oradata/arch';
+alter system set log_archive_format='%t_%s_%r.arc' scope=spfile;
+
+
+
+
+run
+{
+allocate channel c1 type disk;
+allocate channel c2 type disk;
+crosscheck backup;
+crosscheck archivelog all;
+crosscheck copy;
+delete noprompt expired backup;
+delete noprompt copy tag db_whole_copy;
+Backup as copy db_file_name_convert=('/oradata/EDIREL/','/bkp/rmanbkp/imagebkp/')
+incremental level 0 database tag db_whole_copy;
+release channel c1;
+release channel c2;
+}
+
+
+
+to make standby to primary
+===========================
+remove all parameter that required for standby database from pfile and startup with pfile.
+
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE FINISH;
+ALTER DATABASE ACTIVATE STANDBY DATABASE;
+STARTUP FORCE;

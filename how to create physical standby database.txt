@@ -1,0 +1,267 @@
+Step-by-step instructions on how to create a Physical Standby Database on Windows and UNIX servers, and maintenance tips on the databases in a Data Guard Environment.
+
+Oracle 10g Data Guard is a great tool to ensure high availability, data protection and disaster recovery for enterprise data. I have been working on Data Guard/Standby databases using both Grid control and SQL command line for a couple of years, and my latest experience with Data Guard was manually creating a Physical Standby Database for a Laboratory Information Management System (LIMS) half a year ago. I maintain it daily and it works well. I would like to share my experience with the other DBAs.
+
+In this example the database version is 10.2.0.3.. The Primary database and Standby database are located on different machines at different sites. The Primary database is called PRIM and the Standby database is called STAN. I use Flash Recovery Area, and OMF. 
+
+I. Before you get started:
+
+1. Make sure the operating system and platform architecture on the primary and standby systems are the same;
+
+2. Install Oracle database software without the starter database on the standby server and patch it if necessary. Make sure the same Oracle software release is used on the Primary and Standby databases, and Oracle home paths are identical. 
+
+3. Test the Standby Database creation on a test environment first before working on the Production database.
+
+II. On the Primary Database Side:
+
+1. Enable forced logging on your primary database:
+SQL> ALTER DATABASE FORCE LOGGING;
+
+2. Create a password file if it doesn’t exist.
+1) To check if a password file already exists, run the following command: 
+SQL> select * from v$pwfile_users;
+
+2) If it doesn’t exist, use the following command to create one:
+- On Windows: 
+$cd %ORACLE_HOME%\database
+$orapwd file=pwdPRIM.ora password=xxxxxxxx force=y
+(Note: Replace xxxxxxxxx with the password for the SYS user.)
+
+- On UNIX:
+$Cd $ORACLE_HOME/dbs
+$Orapwd file=pwdPRIM.ora password=xxxxxxxx force=y
+(Note: Replace xxxxxxxxx with your actual password for the SYS user.)
+
+3. Configure a Standby Redo log.
+1) The size of the standby redo log files should match the size of the current Primary database online redo log files. To find out the size of your online redo log files:
+SQL> select bytes from v$log;
+
+BYTES
+----------
+52428800
+52428800
+52428800
+
+2) Use the following command to determine your current log file groups:
+SQL> select group#, member from v$logfile;
+
+3) Create standby Redo log groups.
+My primary database had 3 log file groups originally and I created 3 standby redo log groups using the following commands:
+SQL>ALTER DATABASE ADD STANDBY LOGFILE GROUP 4 SIZE 50M;
+SQL>ALTER DATABASE ADD STANDBY LOGFILE GROUP 5 SIZE 50M;
+SQL>ALTER DATABASE ADD STANDBY LOGFILE GROUP 6 SIZE 50M;
+
+4) To verify the results of the standby redo log groups creation, run the following query:
+SQL>select * from v$standby_log;
+
+4. Enable Archiving on Primary. 
+If your primary database is not already in Archive Log mode, enable the archive log mode:
+SQL>shutdown immediate;
+SQL>startup mount;
+SQL>alter database archivelog;
+SQL>alter database open;
+SQL>archive log list;
+
+5. Set Primary Database Initialization Parameters
+Create a text initialization parameter file (PFILE) from the server parameter file (SPFILE), to add the new primary role parameters.
+
+1) Create pfile from spfile for the primary database:
+- On Windows:
+SQL>create pfile=’\database\pfilePRIM.ora’ from spfile;
+(Note- specify your Oracle home path to replace ‘’).
+
+- On UNIX:
+SQL>create pfile=’/dbs/pfilePRIM.ora’ from spfile;
+(Note- specify your Oracle home path to replace ‘’).
+
+2) Edit pfilePRIM.ora to add the new primary and standby role parameters: (Here the file paths are from a windows system. For UNIX system, specify the path accordingly)
+
+db_name=PRIM
+db_unique_name=PRIM
+LOG_ARCHIVE_CONFIG='DG_CONFIG=(PRIM,STAN)'
+LOG_ARCHIVE_DEST_1='LOCATION=F:\Oracle\flash_recovery_area\PRIM\ARCHIVELOG VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=PRIM’
+LOG_ARCHIVE_DEST_2='SERVICE=STAN LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=STAN'
+LOG_ARCHIVE_DEST_STATE_1=ENABLE
+LOG_ARCHIVE_DEST_STATE_2=ENABLE
+LOG_ARCHIVE_FORMAT=%t_%s_%r.arc
+LOG_ARCHIVE_MAX_PROCESSES=30
+remote_login_passwordfile='EXCLUSIVE'
+FAL_SERVER=STAN
+FAL_CLIENT=PRIM
+STANDBY_FILE_MANAGEMENT=AUTO
+# Specify the location of the standby DB datafiles followed by the primary location;
+DB_FILE_NAME_CONVERT='E:\oracle\product\10.2.0\oradata\STAN\DATAFILE','E:\oracle\product\10.2.0\oradata\PRIM\DATAFILE'
+# Specify the location of the standby DB online redo log files followed by the primary location LOG_FILE_NAME_CONVERT=’E:\oracle\product\10.2.0\oradata\STAN\ONLINELOG’,’E:\oracle\product\10.2.0\oradata\PRIM\ONLINELOG’,’F:\Oracle\flash_recovery_area\STAN\ONLINELOG’,’F:\Oracle\flash_recovery_area\PRIM\ONLINELOG’
+
+6. Create spfile from pfile, and restart primary database using the new spfile.
+Data Guard must use SPFILE. Create the SPFILE and restart database.
+- On windows:
+SQL> shutdown immediate;
+SQL> startup nomount pfile=’\database\pfilePRIM.ora’;
+SQL>create spfile from pfile=’\database\pfilePRIM.ora’;
+-- Restart the Primary database using the newly created SPFILE.
+SQL>shutdown immediate;
+SQL>Startup;
+(Note- specify your Oracle home path to replace ‘’).
+
+- On UNIX:
+SQL> shutdown immediate;
+SQL> startup nomount pfile=’/dbs/pfilePRIM.ora’;
+SQL>create spfile from pfile=’/dbs/pfilePRIM.ora’;
+-- Restart the Primary database using the newly created SPFILE.
+SQL>shutdown immediate;
+SQL>Startup;
+(Note- specify your Oracle home path to replace ‘’).
+
+III. On the Standby Database Site:
+
+1. Create a copy of Primary database data files on the Standby Server:
+On Primary DB:
+SQL>shutdown immediate;
+
+On Standby Server (While the Primary database is shut down):
+1) Create directory for data files, for example, on windows, E:\oracle\product\10.2.0\oradata\STAN\DATAFILE. 
+On UNIX, create the directory accordingly.
+
+2) Copy the data files and temp files over.
+
+3) Create directory (multiplexing) for online logs, for example, on Windows, E:\oracle\product\10.2.0\oradata\STAN\ONLINELOG and F:\Oracle\flash_recovery_area\STAN\ONLINELOG.
+On UNIX, create the directories accordingly.
+
+4) Copy the online logs over.
+
+2. Create a Control File for the standby database:
+On Primary DB, create a control file for the standby to use:
+SQL>startup mount;
+SQL>alter database create standby controlfile as ‘STAN.ctl;
+SQL>ALTER DATABASE OPEN;
+
+3. Copy the Primary DB pfile to Standby server and rename/edit the file.
+
+1) Copy pfilePRIM.ora from Primary server to Standby server, to database folder on Windows or dbs folder on UNIX under the Oracle home path. 
+
+2) Rename it to pfileSTAN.ora, and modify the file as follows. : (Here the file paths are from a windows system. For UNIX system, specify the path accordingly)
+
+*.audit_file_dest='E:\oracle\product\10.2.0\admin\STAN\adump'
+*.background_dump_dest='E:\oracle\product\10.2.0\admin\STAN\bdump'
+*.core_dump_dest='E:\oracle\product\10.2.0\admin\STAN\cdump'
+*.user_dump_dest='E:\oracle\product\10.2.0\admin\STAN\udump'
+*.compatible='10.2.0.3.0'
+control_files='E:\ORACLE\PRODUCT\10.2.0\ORADATA\STAN\CONTROLFILE\STAN.CTL','F:\ORACLE\FLASH_RECOVERY_AREA\STAN\CONTROLFILE\STAN.CTL'
+db_name='PRIM'
+db_unique_name=STAN
+LOG_ARCHIVE_CONFIG=’DG_CONFIG=(PRIM,STAN)’
+LOG_ARCHIVE_DEST_1=‘LOCATION=F:\Oracle\flash_recovery_area\STAN\ARCHIVELOG VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=STAN’
+LOG_ARCHIVE_DEST_2=‘SERVICE=PRIM LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=PRIM’
+LOG_ARCHIVE_DEST_STATE_1=ENABLE
+LOG_ARCHIVE_DEST_STATE_2=ENABLE
+LOG_ARCHIVE_FORMAT=%t_%s_%r.arc
+LOG_ARCHIVE_MAX_PROCESSES=30
+FAL_SERVER=PRIM
+FAL_CLIENT=STAN
+remote_login_passwordfile='EXCLUSIVE'
+# Specify the location of the primary DB datafiles followed by the standby location
+DB_FILE_NAME_CONVERT=’E:\oracle\product\10.2.0\oradata\PRIM\DATAFILE’,’E:\oracle\product\10.2.0\oradata\STAN\DATAFILE’
+# Specify the location of the primary DB online redo log files followed by the standby location
+LOG_FILE_NAME_CONVERT=’E:\oracle\product\10.2.0\oradata\PRIM\ONLINELOG’,’E:\oracle\product\10.2.0\oradata\STAN\ONLINELOG’,’F:\Oracle\flash_recovery_area\PRIM\ONLINELOG’,’F:\Oracle\flash_recovery_area\STAN\ONLINELOG’
+STANDBY_FILE_MANAGEMENT=AUTO
+
+(Note: Not all the parameter entries are listed here.)
+
+4. On Standby server, create all required directories for dump and archived log destination:
+Create directories adump, bdump, cdump, udump, and archived log destinations for the standby database.
+
+5. Copy the standby control file ‘STAN.ctl’ from primary to standby destinations ;
+
+6. Copy the Primary password file to standby and rename it to pwdSTAN.ora.
+On Windows copy it to \database folder, and on UNIX copy it to /dbs directory. And then rename the password file.
+
+7. For Windows, create a Windows-based services (optional):
+$oradim –NEW –SID STAN –STARTMODE manual
+
+8. Configure listeners for the primary and standby databases.
+
+1) On Primary system: use Oracle Net Manager to configure a listener for PRIM and STAN. Then restart the listener.
+$lsnrctl stop
+$lsnrctl start
+
+2) On Standby server: use Net Manager to configure a listener for PRIM and STAN. Then restart the listener.
+$lsnrctl stop 
+$lsnrctl start
+
+9. Create Oracle Net service names.
+1) On Primary system: use Oracle Net Manager to create network service names for PRIM and STAN. Check tnsping to both services:
+$tnsping PRIM
+$tnsping STAN
+
+2) On Standby system: use Oracle Net Manager to create network service names for PRIM and STAN. Check tnsping to both services:
+$tnsping PRIM
+$tnsping STAN
+
+10. On Standby server, setup the environment variables to point to the Standby database.
+
+Set up ORACLE_HOME and ORACLE_SID.
+
+11. Start up nomount the standby database and generate a spfile.
+- On Windows: 
+SQL>startup nomount pfile=’\database\pfileSTAN.ora’;
+SQL>create spfile from pfile=’\database\pfileSTAN.ora’;
+-- Restart the Standby database using the newly created SPFILE.
+SQL>shutdown immediate;
+SQL>startup mount;
+
+- On UNIX: 
+SQL>startup nomount pfile=’/dbs/pfileSTAN.ora’;
+SQL>create spfile from pfile=’/dbs/pfileSTAN.ora’;
+-- Restart the Standby database using the newly created SPFILE.
+SQL>shutdown immediate;
+SQL>startup mount;
+(Note- specify your Oracle home path to replace ‘’).
+
+12. Start Redo apply
+1) On the standby database, to start redo apply:
+SQL>alter database recover managed standby database disconnect from session;
+
+If you ever need to stop log apply services:
+SQL> alter database recover managed standby database cancel;
+
+13. Verify the standby database is performing properly:
+1) On Standby perform a query:
+SQL>select sequence#, first_time, next_time from v$archived_log;
+
+2) On Primary, force a logfile switch:
+SQL>alter system switch logfile;
+
+3) On Standby, verify the archived redo log files were applied:
+SQL>select sequence#, applied from v$archived_log order by sequence#;
+
+14. If you want the redo data to be applied as it is received without waiting for the current standby redo log file to be archived, enable the real-time apply.
+
+To start real-time apply:
+SQL> alter database recover managed standby database using current logfile disconnect;
+
+15. To create multiple standby databases, repeat this procedure.
+
+IV. Maintenance:
+
+1. Check the alert log files of Primary and Standby databases frequently to monitor the database operations in a Data Guard environment.
+
+2. Cleanup the archive logs on Primary and Standby servers.
+
+I scheduled weekly Hot Whole database backup against my primary database that also backs up and delete the archived logs on Primary. 
+
+For the standby database, I run RMAN to backup and delete the archive logs once per week. 
+$rman target /@STAN;
+RMAN>backup archivelog all delete input;
+
+To delete the archivelog backup files on the standby server, I run the following once a month:
+RMAN>delete backupset;
+
+3. Password management
+The password for the SYS user must be identical on every system for the redo data transmission to succeed. If you change the password for SYS on Primary database, you will have to update the password file for Standby database accordingly, otherwise the logs won’t be shipped to the standby server.
+
+Refer to section II.2, step 2 to update/recreate password file for the Standby database.
+
+Reference:
+Oracle Data Guard Concepts and Administration 10g Release 2 (10.2), B14239-04
+

@@ -1,0 +1,77 @@
+PROD
+====
+alter database add standby logfile 'D:\ORADATA\NEFT\stby_redo01.log' size 50M;
+alter system set log_archive_config='dg_config=(SFMS,DRSFMS)';
+alter system set log_archive_dest_1='location=L:\ORADATA\SFMS\ valid_for=(all_logfiles, all_roles) db_unique_name=DRSFMS';
+alter system set log_archive_dest_2='service=DGSFMS noaffirm async valid_for=(online_logfiles, primary_role) db_unique_name=SFMS';
+alter system set fal_client='DGDRSFMS';
+alter system set fal_server='DGSFMS';
+alter system set standby_file_management='AUTO';
+alter system set remote_loging_passwordfile=EXCLUSIVE;
+alter system set log_archive_format='SFMS_ARC%S_%R.%T';
+
+DGSFMS =
+  (DESCRIPTION= 
+    (ADDRESS_LIST= 
+      (ADDRESS= (PROTOCOL=TCP)(Host=production)(Port=1521))
+    )
+    (CONNECT_DATA= (SERVICE_NAME=SFMS))
+  )
+DGDRSFMS =
+  (DESCRIPTION= 
+    (ADDRESS_LIST= 
+      (ADDRESS= (PROTOCOL=TCP)(Host=standby)(Port=1521))
+    )
+    (CONNECT_DATA= (SERVICE_NAME=SFMS))
+  )
+
+
+
+
+
+STANDBY
+=======
+DGSFMS =
+  (DESCRIPTION= 
+    (ADDRESS_LIST= 
+      (ADDRESS= (PROTOCOL=TCP)(Host=production)(Port=1521))
+    )
+    (CONNECT_DATA= (SERVICE_NAME=SFMS))
+  )
+DGDRSFMS =
+  (DESCRIPTION= 
+    (ADDRESS_LIST= 
+      (ADDRESS= (PROTOCOL=TCP)(Host=standby)(Port=1521))
+    )
+    (CONNECT_DATA= (SERVICE_NAME=SFMS))
+  )
+
+Copy password file and paramater file to standby server and start in nomount mode.
+
+RMAN target sys@DGSFMS auxiliary sys@DGDRSFMS
+
+run {
+ allocate channel pri1 type disk;
+ allocate channel pri2 type disk;
+ allocate channel prmy4 type disk;
+ allocate auxiliary channel stby type disk;
+ 
+ duplicate target database 
+  for standby 
+  from active database
+  dorecover
+  spfile
+    set db_unique_name='DRNEFT'
+    set control_files='D:\ORADATA\NEFT\control01.ctl','D:\ORADATA\NEFT\control02.ct'
+    set fal_client='DGDRSFMS'
+    set fal_server='DGSFMS'
+    set standby_file_management='AUTO'
+    set log_archive_config='dg_config=(pritst,stbytst)'
+    set log_archive_dest_1='LOCATION=/u01/app/oracle/oradata/pritst/arch/ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=stbytst'
+    set log_archive_dest_2='service=pritst ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=pritst'
+  nofilenamecheck;
+  }
+
+OR
+
+duplicate target database for standby from active database nofilenamecheck;

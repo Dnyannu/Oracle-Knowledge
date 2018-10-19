@@ -1,0 +1,172 @@
+@REM $Header: database_restore.cmd,v 1.4 2010/08/04 17:55:57 $
+
+@REM bcpyrght
+@REM *************************************************************************** 
+@REM * $VRTScprght: Copyright 2014 Symantec Corporation, All Rights Reserved SY39-6648-5573-26-15-5  $ * 
+@REM *************************************************************************** 
+@REM ecpyrght
+@REM
+@REM ---------------------------------------------------------------------------
+@REM  			database_restore.cmd
+@REM ---------------------------------------------------------------------------
+@REM  This script uses Recovery Manager to restore all datafiles, and recover
+@REM  them completely. 
+@REM ---------------------------------------------------------------------------
+
+@setlocal ENABLEEXTENSIONS
+
+@REM ---------------------------------------------------------------------------
+@REM No need to echo the commands.
+@REM ---------------------------------------------------------------------------
+
+@echo off
+
+@REM ---------------------------------------------------------------------------
+@REM Put output in the same filename, different extension.
+@REM ---------------------------------------------------------------------------
+
+@set RMAN_LOG_FILE="%~dpn0.out"
+
+@REM ---------------------------------------------------------------------------
+@REM You may want to delete the output file so that backup information does
+@REM not accumulate.  If not, delete the following command.
+@REM ---------------------------------------------------------------------------
+
+@if exist %RMAN_LOG_FILE% del %RMAN_LOG_FILE%
+
+@REM ---------------------------------------------------------------------------
+@REM Replace H:\oracle\ora102, below, with the Oracle home path.
+@REM ---------------------------------------------------------------------------
+
+@set ORACLE_HOME=H:\oracle\ora102
+
+@REM ---------------------------------------------------------------------------
+@REM Replace ora102, below, with the Oracle SID.
+@REM ---------------------------------------------------------------------------
+
+@set ORACLE_SID=ora102
+
+@REM ---------------------------------------------------------------------------
+@REM Replace sys/manager, below, with the target connect string.
+@REM ---------------------------------------------------------------------------
+
+@set TARGET_CONNECT_STR=sys/manager
+
+@REM ---------------------------------------------------------------------------
+@REM Replace %ORACLE_HOME%\bin, below, with the path to the rman executable.
+@REM ---------------------------------------------------------------------------
+
+@set RMAN=%ORACLE_HOME%\bin\rman.exe
+
+@REM ---------------------------------------------------------------------------
+@REM Log the start of this script.
+@REM ---------------------------------------------------------------------------
+
+@for /F "tokens=1*" %%p in ('date /T') do @set DATE=%%p %%q
+@for /F %%p in ('time /T') do @set DATE=%DATE% %%p
+
+@echo ==== started on %DATE% ==== >> %RMAN_LOG_FILE%
+@echo Script name: %0 >> %RMAN_LOG_FILE%
+
+@REM ---------------------------------------------------------------------------
+@REM Several RMAN commands use time parameters that require NLS_LANG and 
+@REM NLS_DATE_FORMAT to be set. This example uses the standard date format.
+@REM Replace below with the desired language values.
+@REM ---------------------------------------------------------------------------
+
+@set NLS_LANG=american
+@set NLS_DATE_FORMAT=YYYY-MM-DD:hh24:mi:ss
+
+@REM ---------------------------------------------------------------------------
+@REM Print out environment variables set in this script.
+@REM ---------------------------------------------------------------------------
+
+@echo #                                       >> %RMAN_LOG_FILE%
+@echo   RMAN  :  %RMAN%                       >> %RMAN_LOG_FILE%
+@echo   NLS_LANG  :  %NLS_LANG%               >> %RMAN_LOG_FILE%
+@echo   ORACLE_HOME  :  %ORACLE_HOME%         >> %RMAN_LOG_FILE%
+@echo   ORACLE_SID  :  %ORACLE_SID%           >> %RMAN_LOG_FILE%
+@echo   NLS_DATE_FORMAT  :  %NLS_DATE_FORMAT% >> %RMAN_LOG_FILE%
+@echo   RMAN_LOG_FILE  :  %RMAN_LOG_FILE%     >> %RMAN_LOG_FILE%
+
+@REM ---------------------------------------------------------------------------
+@REM NOTE: We assume that the database is properly opened in a mounted state. If 
+@REM desired, this would be the place to verify that.
+@REM ---------------------------------------------------------------------------
+
+@REM ---------------------------------------------------------------------------
+@REM Call Recovery Manager to initiate the restore. This example does not use a
+@REM Recovery Catalog. If you choose to use one, remove the option, nocatalog,
+@REM from the rman command line below and add a 
+@REM 'catalog <userid>/<passwd>@<net service name>' statement.
+@REM
+@REM This script restores all datafiles, and recovers them completely.  
+@REM All data files are restored to their current locations, from their most
+@REM recent backups.  It does not restore the control file. If you wish to
+@REM omit restoring one or more tablespaces, use the skip tablespace clause
+@REM on the restore command.
+@REM
+@REM Note recovery manager automatically:
+@REM     o determines whether the controlfile is a backup, and will perform the
+@REM       correct type of recovery.
+@REM     o restores any archived redo logs that are currently not on disk,
+@REM       which are required for recovery.
+@REM
+@REM If there are incremental backups, it will apply these first, then
+@REM apply any redo required to fully recover.
+@REM
+@REM  NOTE WHEN USING NET SERVICE NAME: When connecting to a database
+@REM  using a net service name, you must use a send command or a parms operand to 
+@REM  specify environment variables.  In other words, when accessing a database
+@REM  through a listener, the environment variables set at the system level are not 
+@REM  visible when RMAN is running.  For more information on the environment
+@REM  variables, please refer to the NetBackup for Oracle Admin. Guide.
+@REM
+@REM If you are getting an error that the input line is too long, you will need
+@REM to put the RMAN run block in a separate file.  Then use the "cmdfile"
+@REM option of RMAN.  For more information on the "cmdfile" options please
+@REM refer to the RMAN documentation.
+@REM ---------------------------------------------------------------------------
+
+@(
+echo RUN {
+echo ALLOCATE CHANNEL ch00 TYPE 'SBT_TAPE';
+echo ALLOCATE CHANNEL ch01 TYPE 'SBT_TAPE';
+echo # Restore all datafiles, and recovers them completely.
+echo  RESTORE
+echo    DATABASE;
+echo  RECOVER
+echo    DATABASE;
+echo RELEASE CHANNEL ch00;
+echo RELEASE CHANNEL ch01;
+echo }
+) | %RMAN% target %TARGET_CONNECT_STR% nocatalog msglog '%RMAN_LOG_FILE%' append
+
+@set ERRLEVEL=%ERRORLEVEL%
+
+@REM ---------------------------------------------------------------------------
+@REM Determine the result of the restore.
+@REM ---------------------------------------------------------------------------
+
+@if %ERRLEVEL% NEQ 0 @goto err
+
+@set LOGMSG=ended successfully
+
+@goto end
+
+:err
+@set LOGMSG=ended in error
+
+:end
+
+@REM ---------------------------------------------------------------------------
+@REM Log the completion of the script.
+@REM ---------------------------------------------------------------------------
+
+@for /F "tokens=1*" %%p in ('date /T') do @set DATE=%%p %%q
+@for /F %%p in ('time /T') do @set DATE=%DATE% %%p
+
+@echo #  >> %RMAN_LOG_FILE% 
+@echo ==== %LOGMSG% on %DATE% ==== >> %RMAN_LOG_FILE%
+@endlocal
+@REM End of Main Program -----------------------------------------------------

@@ -1,0 +1,416 @@
+alter database force logging;
+
+select group#, thread#, bytes/1024/1024 from v$log;
+select member from v$logfile;
+
+alter database add standby logfile 'C:\APP\ORACLE\ORADATA\SKI\stby_redo01.log' size 50M;
+alter database add standby logfile 'C:\APP\ORACLE\ORADATA\SKI\stby_redo02.log' size 50M;
+alter database add standby logfile 'C:\APP\ORACLE\ORADATA\SKI\stby_redo03.log' size 50M;
+alter database add standby logfile 'C:\APP\ORACLE\ORADATA\SKI\stby_redo04.log' size 50M;
+
+alter system set log_archive_config='DG_CONFIG=(SKI,DRSKI)';
+
+alter system set log_archive_dest_1='LOCATION=C:\app\Oracle\Archive\SKI\ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=SKI';
+
+alter system set log_archive_dest_2='SERVICE=DGDRSKI LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=DRSKI';
+
+alter system set fal_server=DGDRSKI;
+
+alter system set fal_client=DGSKI;
+
+alter system set standby_file_management=auto;
+
+alter system set remote_login_passwordfile=exclusive;
+
+alter system set log_archive_dest_state_2=defer;
+
+initSKI.ora
+DB_NAME=SKI
+DB_UNIQUE_NAME=DRSKI
+
+
+rman
+connect target sys/qwerty@dgSKI
+connect auxiliary sys/qwerty@dgdrSKI
+
+run {
+ allocate channel pri1 type disk;
+ allocate channel pri2 type disk;
+ allocate channel prmy4 type disk;
+ allocate auxiliary channel stby type disk;
+ duplicate target database 
+  for standby 
+  from active database
+  dorecover
+  spfile
+    set db_unique_name='DRSKI'
+    set control_files='C:\APP\ORACLE\ORADATA\SKI\CONTROL01.CTL'
+    set fal_client='DGDRSKI'
+    set fal_server='DGSKI'
+    set standby_file_management='AUTO'
+    set log_archive_config='dg_config=(SKI,DRSKI)'
+    set log_archive_dest_1='LOCATION=C:\app\Oracle\Archive\SKI\ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=DRSKI'
+    set log_archive_dest_2='service=DGSKI ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=SKI'
+  nofilenamecheck;
+  }
+
+select process,client_process,status,sequence# from v$managed_standby;
+
+alter database recover managed standby database nodelay disconnect from session;
+
+select process,client_process,status,sequence# from v$managed_standby;
+
+select 'alter database rename file '''||MEMBER||''' to ''C:\app\Oracle\oradata\SKI\' from v$logfile order by 1;
+
+alter database rename file 'C:\APP\ORACLE\FAST_RECOVERY_AREA\DRSKI\ONLINELOG\O1_MF_1_C3B2YHMK_.LOG' to 'C:\app\Oracle\oradata\SKI\REDO01.LOG';
+alter database rename file 'C:\APP\ORACLE\FAST_RECOVERY_AREA\DRSKI\ONLINELOG\O1_MF_2_C3B2YJL3_.LOG' to 'C:\app\Oracle\oradata\SKI\REDO02.LOG';
+alter database rename file 'C:\APP\ORACLE\FAST_RECOVERY_AREA\DRSKI\ONLINELOG\O1_MF_3_C3B2YKJN_.LOG' to 'C:\app\Oracle\oradata\SKI\REDO03.LOG';
+
+ALTER SYSTEM SET STANDBY_FILE_MANAGEMENT='MANUAL';
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;
+
+SELECT GROUP#, STATUS FROM V$LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 1;
+alter database drop logfile group 1;
+ALTER DATABASE ADD LOGFILE GROUP 1 'C:\app\Oracle\oradata\SKI\REDO01.LOG' SIZE 50M;
+
+SELECT GROUP#, STATUS FROM V$LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 2;
+alter database drop logfile group 2;
+ALTER DATABASE ADD LOGFILE GROUP 2 'C:\app\Oracle\oradata\SKI\REDO02.LOG' SIZE 50M;
+
+SELECT GROUP#, STATUS FROM V$LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 3;
+alter database drop logfile group 3;
+ALTER DATABASE ADD LOGFILE GROUP 3 'C:\app\Oracle\oradata\SKI\REDO03.LOG' SIZE 50M;
+
+SELECT GROUP#, STATUS FROM V$standby_LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 5;
+ALTER DATABASE DROP LOGFILE GROUP 5;
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 5 'C:\APP\ORACLE\ORADATA\SKI\stby_redo05.log' size 50M;
+
+SELECT GROUP#, STATUS FROM V$standby_LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 7;
+ALTER DATABASE DROP LOGFILE GROUP 7;
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 7 'C:\APP\ORACLE\ORADATA\SKI\stby_redo07.log' size 50M;
+
+SELECT GROUP#, STATUS FROM V$standby_LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 6;
+ALTER DATABASE DROP LOGFILE GROUP 6;
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 6 'C:\APP\ORACLE\ORADATA\SKI\stby_redo06.log' size 50M;
+
+SELECT GROUP#, STATUS FROM V$standby_LOG;
+ALTER DATABASE CLEAR LOGFILE GROUP 4;
+ALTER DATABASE DROP LOGFILE GROUP 4;
+ALTER DATABASE ADD STANDBY LOGFILE GROUP 4 'C:\APP\ORACLE\ORADATA\SKI\stby_redo04.log' size 50M;
+
+alter system set standby_file_management=auto;
+
+alter database recover managed standby database nodelay disconnect from session;
+
+alter database open;
+
+ALTER SYSTEM SET DG_BROKER_START=TRUE
+
+DGMGRL
+CONNECT SYS@DGSKI
+CREATE CONFIGURATION 'SKIDGMG' AS PRIMARY DATABASE IS 'SKI' CONNECT IDENTIFIER IS DGSKI;
+SHOW CONFIGURATION
+ADD DATABASE 'DRSKI' AS CONNECT IDENTIFIER IS DGDRSKI; OR ADD DATABASE 'DRSKI' AS CONNECT IDENTIFIER IS DGDRSKI MAINTAINED AS PHYSICAL;
+SHOW CONFIGURATION
+ENABLE CONFIGURATION
+SHOW CONFIGURATION
+CONNECT SYS@DGDRSKI
+SHOW CONFIGURATION
+SHOW DATABASE VERBOSE SKI
+SHOW DATABASE VERBOSE DRSKI
+SWITCHOVER TO 'DRSKI';
+
+ADD DATABASE 'SCSKI' AS CONNECT IDENTIFIER IS SCDRSKI; OR ADD DATABASE 'SCSKI' AS CONNECT IDENTIFIER IS SCDRSKI MAINTAINED AS PHYSICAL;
+SHOW CONFIGURATION;
+ENABLE DATABASE SCSKI;
+SHOW CONFIGURATION;
+
+
+EDIT DATABASE 'SKI' SET PROPERTY 'StaticConnectIdentifier' = '(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(PORT=1521)(HOST=192.168.100.53))(CONNECT_DATA=(SERVICE_NAME=SKI_DGMGRL)(INSTANCE_NAME=SKI)(SERVER=DEDICATED)))';
+
+
+EDIT DATABASE 'DRSKI' SET PROPERTY 'StaticConnectIdentifier' = '(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=192.168.100.52)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=DRSKI_DGMGRL)(INSTANCE_NAME=drSKI)(SERVER=DEDICATED)))';
+
+
+=========================================================================
+
+C:\app\Oracle\Archive\SKI>rman
+
+Recovery Manager: Release 11.2.0.4.0 - Production on Tue Aug 9 15:08:44 2016
+
+Copyright (c) 1982, 2011, Oracle and/or its affiliates.  All rights reserved.
+
+RMAN> connect target sys/qwerty@dgSKI
+
+connected to target database: SKI (DBID=1390869784)
+
+RMAN> connect auxiliary sys/qwerty@dgdrSKI
+
+connected to auxiliary database: SKI (not mounted)
+
+RMAN>
+
+RMAN> run {
+2>  allocate channel pri1 type disk;
+3>  allocate channel pri2 type disk;
+4>  allocate channel prmy4 type disk;
+5>  allocate auxiliary channel stby type disk;
+6>  duplicate target database
+7>   for standby
+8>   from active database
+9>   dorecover
+10>   spfile
+11>     set db_unique_name='DRSKI'
+12>     set control_files='C:\APP\ORACLE\ORADATA\SKI\CONTROL01.CTL'
+13>     set fal_client='DGDRSKI'
+14>     set fal_server='DGSKI'
+15>     set standby_file_management='AUTO'
+16>     set log_archive_config='dg_config=(SKI,DRSKI)'
+17>     set log_archive_dest_1='LOCATION=C:\app\Oracle\Archive\SKI\ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=DRSKI'
+18>     set log_archive_dest_2='service=DGSKI ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=SKI'
+19>   nofilenamecheck;
+20>   }
+
+using target database control file instead of recovery catalog
+allocated channel: pri1
+channel pri1: SID=30 device type=DISK
+
+allocated channel: pri2
+channel pri2: SID=43 device type=DISK
+
+allocated channel: prmy4
+channel prmy4: SID=32 device type=DISK
+
+allocated channel: stby
+channel stby: SID=20 device type=DISK
+
+Starting Duplicate Db at 09-AUG-16
+
+contents of Memory Script:
+{
+   backup as copy reuse
+   targetfile  'C:\app\Oracle\product\11.2.0\dbhome_1\DATABASE\PWDski.ORA' auxiliary format
+ 'C:\app\Oracle\product\11.2.0\dbhome_1\DATABASE\PWDski.ORA'   targetfile
+ 'C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SPFILESKI.ORA' auxiliary format
+ 'C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SPFILESKI.ORA'   ;
+   sql clone "alter system set spfile= ''C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SPFILESKI.ORA''";
+}
+executing Memory Script
+
+Starting backup at 09-AUG-16
+Finished backup at 09-AUG-16
+
+sql statement: alter system set spfile= ''C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SPFILESKI.ORA''
+
+contents of Memory Script:
+{
+   sql clone "alter system set  db_unique_name =
+ ''DRSKI'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  control_files =
+ ''C:\APP\ORACLE\ORADATA\SKI\CONTROL01.CTL'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  fal_client =
+ ''DGDRSKI'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  fal_server =
+ ''DGSKI'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  standby_file_management =
+ ''AUTO'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  log_archive_config =
+ ''dg_config=(SKI,DRSKI)'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  log_archive_dest_1 =
+ ''LOCATION=C:\app\Oracle\Archive\SKI\ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=DRSKI'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  log_archive_dest_2 =
+ ''service=DGSKI ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=SKI'' comment=
+ '''' scope=spfile";
+   shutdown clone immediate;
+   startup clone nomount;
+}
+executing Memory Script
+
+sql statement: alter system set  db_unique_name =  ''DRSKI'' comment= '''' scope=spfile
+
+sql statement: alter system set  control_files =  ''C:\APP\ORACLE\ORADATA\SKI\CONTROL01.CTL'' comment= '''' scope=spfile
+
+sql statement: alter system set  fal_client =  ''DGDRSKI'' comment= '''' scope=spfile
+
+sql statement: alter system set  fal_server =  ''DGSKI'' comment= '''' scope=spfile
+
+sql statement: alter system set  standby_file_management =  ''AUTO'' comment= '''' scope=spfile
+
+sql statement: alter system set  log_archive_config =  ''dg_config=(SKI,DRSKI)'' comment= '''' scope=spfile
+
+sql statement: alter system set  log_archive_dest_1 =  ''LOCATION=C:\app\Oracle\Archive\SKI\ VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NA
+ME=DRSKI'' comment= '''' scope=spfile
+
+sql statement: alter system set  log_archive_dest_2 =  ''service=DGSKI ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=SKI'' co
+mment= '''' scope=spfile
+
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     643026944 bytes
+
+Fixed Size                     2283984 bytes
+Variable Size                432014896 bytes
+Database Buffers             205520896 bytes
+Redo Buffers                   3207168 bytes
+allocated channel: stby
+channel stby: SID=18 device type=DISK
+
+contents of Memory Script:
+{
+   backup as copy current controlfile for standby auxiliary format  'C:\APP\ORACLE\ORADATA\SKI\CONTROL01.CTL';
+}
+executing Memory Script
+
+Starting backup at 09-AUG-16
+channel pri1: starting datafile copy
+copying standby control file
+output file name=C:\APP\ORACLE\PRODUCT\11.2.0\DBHOME_1\DATABASE\SNCFSKI.ORA tag=TAG20160809T150918 RECID=1 STAMP=919436960
+channel pri1: datafile copy complete, elapsed time: 00:00:03
+Finished backup at 09-AUG-16
+
+contents of Memory Script:
+{
+   sql clone 'alter database mount standby database';
+}
+executing Memory Script
+
+sql statement: alter database mount standby database
+RMAN-05538: WARNING: implicitly using DB_FILE_NAME_CONVERT
+
+contents of Memory Script:
+{
+   set newname for tempfile  1 to
+ "C:\APP\ORACLE\ORADATA\SKI\TEMP01.DBF";
+   switch clone tempfile all;
+   set newname for datafile  1 to
+ "C:\APP\ORACLE\ORADATA\SKI\SYSTEM01.DBF";
+   set newname for datafile  2 to
+ "C:\APP\ORACLE\ORADATA\SKI\SYSAUX01.DBF";
+   set newname for datafile  3 to
+ "C:\APP\ORACLE\ORADATA\SKI\UNDOTBS01.DBF";
+   set newname for datafile  4 to
+ "C:\APP\ORACLE\ORADATA\SKI\USERS01.DBF";
+   backup as copy reuse
+   datafile  1 auxiliary format
+ "C:\APP\ORACLE\ORADATA\SKI\SYSTEM01.DBF"   datafile
+ 2 auxiliary format
+ "C:\APP\ORACLE\ORADATA\SKI\SYSAUX01.DBF"   datafile
+ 3 auxiliary format
+ "C:\APP\ORACLE\ORADATA\SKI\UNDOTBS01.DBF"   datafile
+ 4 auxiliary format
+ "C:\APP\ORACLE\ORADATA\SKI\USERS01.DBF"   ;
+   sql 'alter system archive log current';
+}
+executing Memory Script
+
+executing command: SET NEWNAME
+
+renamed tempfile 1 to C:\APP\ORACLE\ORADATA\SKI\TEMP01.DBF in control file
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+Starting backup at 09-AUG-16
+channel pri1: starting datafile copy
+input datafile file number=00001 name=C:\APP\ORACLE\ORADATA\SKI\SYSTEM01.DBF
+channel pri2: starting datafile copy
+input datafile file number=00002 name=C:\APP\ORACLE\ORADATA\SKI\SYSAUX01.DBF
+channel prmy4: starting datafile copy
+input datafile file number=00003 name=C:\APP\ORACLE\ORADATA\SKI\UNDOTBS01.DBF
+output file name=C:\APP\ORACLE\ORADATA\SKI\UNDOTBS01.DBF tag=TAG20160809T150929
+channel prmy4: datafile copy complete, elapsed time: 00:00:15
+channel prmy4: starting datafile copy
+input datafile file number=00004 name=C:\APP\ORACLE\ORADATA\SKI\USERS01.DBF
+output file name=C:\APP\ORACLE\ORADATA\SKI\USERS01.DBF tag=TAG20160809T150929
+channel prmy4: datafile copy complete, elapsed time: 00:00:03
+output file name=C:\APP\ORACLE\ORADATA\SKI\SYSAUX01.DBF tag=TAG20160809T150929
+channel pri2: datafile copy complete, elapsed time: 00:01:11
+output file name=C:\APP\ORACLE\ORADATA\SKI\SYSTEM01.DBF tag=TAG20160809T150929
+channel pri1: datafile copy complete, elapsed time: 00:01:31
+Finished backup at 09-AUG-16
+
+sql statement: alter system archive log current
+
+contents of Memory Script:
+{
+   backup as copy reuse
+   archivelog like  "C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001" auxiliary format
+ "C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001"   ;
+   catalog clone archivelog  "C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001";
+   switch clone datafile all;
+}
+executing Memory Script
+
+Starting backup at 09-AUG-16
+channel pri1: starting archived log copy
+input archived log thread=1 sequence=5 RECID=2 STAMP=919437061
+output file name=C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001 RECID=0 STAMP=0
+channel pri1: archived log copy complete, elapsed time: 00:00:01
+Finished backup at 09-AUG-16
+
+cataloged archived log
+archived log file name=C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001 RECID=1 STAMP=919437062
+
+datafile 1 switched to datafile copy
+input datafile copy RECID=1 STAMP=919437062 file name=C:\APP\ORACLE\ORADATA\SKI\SYSTEM01.DBF
+datafile 2 switched to datafile copy
+input datafile copy RECID=2 STAMP=919437062 file name=C:\APP\ORACLE\ORADATA\SKI\SYSAUX01.DBF
+datafile 3 switched to datafile copy
+input datafile copy RECID=3 STAMP=919437062 file name=C:\APP\ORACLE\ORADATA\SKI\UNDOTBS01.DBF
+datafile 4 switched to datafile copy
+input datafile copy RECID=4 STAMP=919437062 file name=C:\APP\ORACLE\ORADATA\SKI\USERS01.DBF
+
+contents of Memory Script:
+{
+   set until scn  918311;
+   recover
+   standby
+   clone database
+    delete archivelog
+   ;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+Starting recover at 09-AUG-16
+
+starting media recovery
+
+archived log for thread 1 with sequence 5 is already on disk as file C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001
+archived log file name=C:\APP\ORACLE\ARCHIVE\SKI\ARC0000000005_0919434971.0001 thread=1 sequence=5
+media recovery complete, elapsed time: 00:00:01
+Finished recover at 09-AUG-16
+Finished Duplicate Db at 09-AUG-16
+released channel: pri1
+released channel: pri2
+released channel: prmy4
+released channel: stby
+
+RMAN> exit
+
+
+Recovery Manager complete.
+
+C:\app\Oracle\Archive\SKI>

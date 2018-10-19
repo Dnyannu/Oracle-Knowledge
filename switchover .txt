@@ -1,0 +1,49 @@
+
+Task to perform Before Switchover:
+1. Verify the primary database instance is open and the standby database instance is mounted.
+
+SQL> select name,open_mode,database_role from v$database;
+
+2. Verify there are no active users connected to the databases.
+3. Make sure the last redo data transmitted from the Primary database was applied on the standby database. Issue the following commands on Primary database and Standby database to find out:
+
+SQL>select max(Sequence#) from v$archived_log;
+SQL>select max(Sequence#) from v$archived_log where applied='YES';
+SQL>select sequence#, applied from v$archived_log;
+
+ Switchover Steps
+1.	On the primary database 
+Connect to primary database
+
+SQL>connect /@primary as sysdba
+SQL> ALTER DATABASE COMMIT TO SWITCHOVER TO PHYSICAL STANDBY WITH SESSION SHUTDOWN;
+
+2. After step 1 finishes, Switch the original physical standby database to primary role;
+Open another prompt and connect to SQLPLUS:
+
+SQL>connect /@Standby as sysdba
+SQL> ALTER DATABASE COMMIT TO SWITCHOVER TO PRIMARY ;
+
+3. Immediately after issuing command in step 2, shut down and restart the former primary instance :
+
+SQL>SHUTDOWN IMMEDIATE;
+SQL>STARTUP NOMOUNT;
+SQL>ALTER DATABASE MOUNT STANDBY DATABASE;
+SQL>ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_2=DEFER;
+SQL>ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT  FROM  SESSION ;
+
+4. After step 3 completes: shut down and restart the former standby instance :
+
+SQL>SHUTDOWN IMMEDIATE;
+SQL>STARTUP;
+
+5. On the new primary database, perform a SWITCH LOGFILE to start sending redo data to the  new standby database.
+
+SQL>ALTER SYSTEM SWITCH LOGFILE;
+
+6. Make sure the redo data transmitted from the Primary database was applied on the standby database. Issue the following commands on Primary database and Standby database to find out:
+
+SQL>select max(Sequence#) from v$archived_log;
+SQL>select max(Sequence#) from v$archived_log where applied='YES';
+SQL>select sequence#, applied from v$archvied_log;
+

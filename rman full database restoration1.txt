@@ -1,0 +1,58 @@
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG ;
+
+C:\APP\RMAN_BKP\DATA10OU24KA_1_1 
+C:\APP\RMAN_BKP\DATA11OU24KS_1_1 
+C:\APP\RMAN_BKP\DATA12OU24NK_1_1 
+C:\APP\RMAN_BKP\CONTROLC-792710905-20140114-01 
+
+C:\>rman target sys
+
+RMAN> startup nomount
+
+RMAN> set controlfile autobackup format for device type disk to 'C:\app\rman_bkp\%F';
+
+RMAN> restore spfile from 'C:\app\rman_bkp\CONTROLC-792710905-20140114-01';
+
+RMAN> restore controlfile from 'C:\app\rman_bkp\CONTROLC-792710905-20140114-01';
+
+RMAN> shutdown abort;
+
+RMAN> startup nomount;
+
+SQL> create pfile from spfile;
+
+File created.
+
+##################################
+# Change following para in pfile #
+#      control_files parameter   #
+# check compatible, must be same #
+##################################
+
+SQL> create spfile from pfile;
+
+RMAN> shutdown abort;
+
+RMAN> startup mount;
+
+RMAN> catalog start with 'C:\app\rman_bkp\';
+
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT 'C:\app\rman_bkp\data%U';
+
+RMAN> restore database;
+
+RMAN>  RECOVER DATABASE;
+
+RMAN> report schema;
+
+RMAN> report need backup;
+
+RMAN> show all;
+
+RMAN> crosscheck archivelog all;
+
+RMAN> backup database plus archivelog;
+
+RMAN> list backup;
+
+RMAN> report need backup;

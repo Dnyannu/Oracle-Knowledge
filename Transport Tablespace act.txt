@@ -1,0 +1,173 @@
+select tablespace_name "Name",extent_management "Management",initial_extent "Initial",next_extent "Next",pct_increase, Logging from dba_tablespaces order by 1;
+
+SELECT tablespace_name, plugged_in, status FROM   dba_tablespaces WHERE  tablespace_name in ('TEST_DATA','USERS');
+
+select distinct owner from dba_segments where tablespace_name in ('TEST_DATA','USERS');
+
+select * from dba_directories;
+
+CREATE USER HR IDENTIFIED BY  hr;
+  -- 1 Role for HR 
+  GRANT RESOURCE TO HR;
+  ALTER USER HR DEFAULT ROLE ALL;
+  -- 7 System Privileges for HR 
+  GRANT CREATE VIEW TO HR;
+  GRANT UNLIMITED TABLESPACE TO HR;
+  GRANT CREATE DATABASE LINK TO HR;
+  GRANT CREATE SEQUENCE TO HR;
+  GRANT CREATE SESSION TO HR;
+  GRANT ALTER SESSION TO HR;
+  GRANT CREATE SYNONYM TO HR;
+
+
+
+CREATE USER SCOTT IDENTIFIED BY  tiger;
+  -- 2 Roles for SCOTT 
+  GRANT RESOURCE TO SCOTT;
+  GRANT CONNECT TO SCOTT;
+  ALTER USER SCOTT DEFAULT ROLE ALL;
+  -- 1 System Privilege for SCOTT 
+  GRANT UNLIMITED TABLESPACE TO SCOTT;
+
+
+
+CREATE USER SH IDENTIFIED BY  sh;
+  -- 2 Roles for SH 
+  GRANT SELECT_CATALOG_ROLE TO SH;
+  GRANT RESOURCE TO SH;
+  ALTER USER SH DEFAULT ROLE ALL;
+  -- 12 System Privileges for SH 
+  GRANT CREATE SEQUENCE TO SH;
+  GRANT ALTER SESSION TO SH;
+  GRANT CREATE SYNONYM TO SH;
+  GRANT CREATE TABLE TO SH;
+  GRANT UNLIMITED TABLESPACE TO SH;
+  GRANT CREATE SESSION TO SH;
+  GRANT CREATE DATABASE LINK TO SH;
+  GRANT CREATE CLUSTER TO SH;
+  GRANT CREATE DIMENSION TO SH;
+  GRANT CREATE VIEW TO SH;
+  GRANT QUERY REWRITE TO SH;
+  GRANT CREATE MATERIALIZED VIEW TO SH;
+
+
+CREATE USER OE IDENTIFIED BY  oe;
+  -- 2 Roles for OE 
+  GRANT RESOURCE TO OE;
+  GRANT XDBADMIN TO OE;
+  ALTER USER OE DEFAULT ROLE ALL;
+  -- 7 System Privileges for OE 
+  GRANT QUERY REWRITE TO OE;
+  GRANT UNLIMITED TABLESPACE TO OE;
+  GRANT CREATE SYNONYM TO OE;
+  GRANT CREATE MATERIALIZED VIEW TO OE;
+  GRANT CREATE DATABASE LINK TO OE;
+  GRANT CREATE VIEW TO OE;
+  GRANT CREATE SESSION TO OE;
+
+
+
+CREATE USER PM IDENTIFIED BY  pm;
+  -- 2 Roles for PM 
+  GRANT CONNECT TO PM;
+  GRANT RESOURCE TO PM;
+  ALTER USER PM DEFAULT ROLE ALL;
+  -- 1 System Privilege for PM 
+  GRANT UNLIMITED TABLESPACE TO PM;
+
+
+
+
+CREATE USER IX IDENTIFIED BY  ix;
+  -- 5 Roles for IX 
+  GRANT CONNECT TO IX;
+  GRANT AQ_ADMINISTRATOR_ROLE TO IX;
+  GRANT RESOURCE TO IX;
+  GRANT AQ_USER_ROLE TO IX;
+  GRANT SELECT_CATALOG_ROLE TO IX;
+  ALTER USER IX DEFAULT ROLE ALL;
+  -- 17 System Privileges for IX 
+  BEGIN
+SYS.DBMS_RULE_ADM.GRANT_SYSTEM_PRIVILEGE(
+  PRIVILEGE    => SYS.DBMS_RULE_ADM.CREATE_RULE_SET_OBJ,
+  GRANTEE      => 'IX',
+  GRANT_OPTION => FALSE);
+END;
+/
+  GRANT CREATE CLUSTER TO IX;
+  GRANT CREATE INDEXTYPE TO IX;
+  GRANT CREATE TRIGGER TO IX;
+  GRANT CREATE PROCEDURE TO IX;
+  GRANT ALTER SESSION TO IX;
+  GRANT CREATE OPERATOR TO IX;
+  GRANT CREATE SEQUENCE TO IX;
+  BEGIN
+SYS.DBMS_RULE_ADM.GRANT_SYSTEM_PRIVILEGE(
+  PRIVILEGE    => SYS.DBMS_RULE_ADM.CREATE_RULE_OBJ,
+  GRANTEE      => 'IX',
+  GRANT_OPTION => FALSE);
+END;
+/
+  GRANT CREATE VIEW TO IX;
+  GRANT CREATE SYNONYM TO IX;
+  GRANT UNLIMITED TABLESPACE TO IX;
+  GRANT CREATE TYPE TO IX;
+  GRANT CREATE TABLE TO IX;
+  GRANT CREATE DATABASE LINK TO IX;
+  GRANT SELECT ANY DICTIONARY TO IX;
+  GRANT CREATE SESSION TO IX;
+
+
+
+CREATE USER TEST_USER IDENTIFIED BY  test_user;
+  -- 2 System Privileges for TEST_USER 
+  GRANT CREATE SESSION TO TEST_USER;
+  GRANT CREATE TABLE TO TEST_USER;
+  -- 1 Tablespace Quota for TEST_USER 
+  ALTER USER TEST_USER QUOTA UNLIMITED ON TEST_DATA;
+
+
+EXEC SYS.DBMS_TTS.TRANSPORT_SET_CHECK(ts_list => 'TEST_DATA,USERS',incl_constraints => TRUE);
+
+exec DBMS_TTS.TRANSPORT_SET_CHECK('TEST_DATA,USERS', FALSE, TRUE);
+
+
+
+
+SELECT * FROM transport_set_violations;
+
+ALTER TABLESPACE test_data READ ONLY;
+ALTER TABLESPACE EXAMPLE READ ONLY;
+ALTER TABLESPACE USERS READ ONLY;
+
+
+expdp userid=system/sys directory=DATADIR dumpfile=test_data.dmp logfile=FINADT_TT_29jun13.log transport_tablespaces=TEST_DATA,USERS,EXAMPLE 
+
+expdp userid=system/sys directory=DATADIR dumpfile=test_data.dmp logfile=test_data_exp.log transport_tablespaces=TEST_DATA,USERS VERSION=LATEST
+
+expdp userid=system/sys directory=DATADIR dumpfile=test_data.dmp logfile=test_data_exp.log transport_tablespaces=TEST_DATA,USERS VERSION=LATEST TRANSPORT_FULL_CHECK=y
+
+alter tablespace USERS rename to USERS01;
+
+select tablespace_name "Name",extent_management "Management",initial_extent "Initial",next_extent "Next",pct_increase, Logging from dba_tablespaces;
+SELECT name FROM v$datafile;
+SHUTDOWN IMMEDIATE
+host mv /oradata/new/TESTDB/users01.dbf /oradata/new/TESTDB/users0101.dbf
+STARTUP MOUNT
+ALTER DATABASE RENAME FILE '/oradata/new/TESTDB/users01.dbf' to '/oradata/new/TESTDB/users0101.dbf';
+ALTER DATABASE OPEN;
+SELECT name FROM v$datafile;
+select tablespace_name "Name",extent_management "Management",initial_extent "Initial",next_extent "Next",pct_increase, Logging from dba_tablespaces;
+alter database default tablespace users01;
+drop tablespace USERS including contents and datafiles;
+
+cp /oradata/TESTDB/users01.dbf /oradata/new/TESTDB/users01.dbf 
+cp /oradata/TESTDB/example01.dbf /oradata/new/TESTDB/example01.dbf 
+cp /oradata/TESTDB/test_data01.dbf /oradata/new/TESTDB/test_data01.dbf 
+
+impdp userid=system/sys directory=DATADIR dumpfile=test_data.dmp logfile=test_data_imp.log transport_datafiles='/oradata/new/TESTDB/users01.dbf,/oradata/new/TESTDB/example01.dbf,/oradata/new/TESTDB/test_data01.dbf'
+
+
+ALTER TABLESPACE test_data READ WRITE;
+ALTER TABLESPACE EXAMPLE READ WRITE;
+ALTER TABLESPACE USERS READ WRITE;

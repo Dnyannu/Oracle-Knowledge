@@ -1,0 +1,64 @@
+Step-by-step
+
+Below are the steps involved in this automation
+
+Below procedure will catch the sessions which are connected from plsql developer,
+sql developer and are idle for 900 seconds (15 mins) i.e. have not done any work in the database.
+
+CREATE OR REPLACE PROCEDURE proc_kill_session AS
+    v_sid     NUMBER(10);
+    v_serial# NUMBER(10);
+    TYPE c_ref_cursor IS REF CURSOR;
+    c_kill c_ref_cursor;
+    v_sql  VARCHAR2(500) := 'select v.SID, v.SERIAL# from v$session v ' ||
+                            'where v.PROGRAM in (''BrainPower2006.exe'') ' ||
+                            'and v.LAST_CALL_ET >= 300 and v.USERNAME = ''DBA_USER''';
+    TYPE rt_v_c_kill IS RECORD(
+        sid     NUMBER(10),
+        serial# NUMBER(10));
+    TYPE tt_v_c_kill IS TABLE OF rt_v_c_kill;
+    v_c_kill tt_v_c_kill := tt_v_c_kill();
+ 
+BEGIN
+    OPEN c_kill FOR v_sql;
+    LOOP
+        FETCH c_kill BULK COLLECT
+            INTO v_c_kill LIMIT 100;
+        EXIT WHEN v_c_kill.COUNT = 0;
+        FOR idx IN 1 .. v_c_kill.COUNT
+        LOOP
+            dbms_output.put_line('alter system kill session ''' || v_c_kill(idx).sid || ',' || v_c_kill(idx)
+                                 .serial# || ''' immediate;');
+            EXECUTE IMMEDIATE ('alter system kill session ''' || v_c_kill(idx).sid || ',' || v_c_kill(idx)
+                              .serial# || ''' immediate');
+        END LOOP;
+    END LOOP;
+    CLOSE c_kill;
+END proc_kill_session;
+/
+Note: As the database consists of n number of schemas, you can modify select sql query to pickup idle sessions from a particular schema only.
+
+Below script will start above procedure after 2 minutes from the scheduling time and will schedule it with an interval of 15 minutes.
+Execute below PLSQL block in SYS schema because dbms_scheduler package is owned by SYS user.
+
+begin
+dbms_scheduler.create_job (
+    job_name => 'KILL_SESSION',
+    job_type => 'STORED_PROCEDURE',
+    job_action => '"SYS"."PROC_KILL_SESSION"',
+    start_date => sysdate+ 2/1440,
+    repeat_interval => 'freq=minutely; interval=10; bysecond=0;',
+    enabled => TRUE
+);
+end;
+/
+Note: Replace with the schema name where the procedure proc_kill_session has been created
+
+To drop the scheduled job execute below PLSQL block
+
+begin
+dbms_scheduler.drop_job (
+    job_name => 'KILL_SESSION'
+);
+end;
+/

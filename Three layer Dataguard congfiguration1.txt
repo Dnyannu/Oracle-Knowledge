@@ -1,0 +1,56 @@
+#########################STANDBY PARAMETERS########################
+*.DB_UNIQUE_NAME=’swx’
+*.db_file_name_convert=’+DATA/SWXSTANDBY2/’,’+DATA/SWXSTANDBY/’,’+DATA/SWX/’,’+FRA/SWXSTANDBY2/’,’+FRA/SWXSTANDBY/’,’+FRA/SWX/’
+*.log_archive_config=’dg_config=(swxstandby2,swxstandby,swx)’
+*.log_archive_dest_1=’LOCATION=+FRA valid_for=(ALL_LOGFILES,ALL_ROLES) db_unique_name=swx’
+*.log_archive_dest_2=’service=swxstandby LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swxstandby’
+*.log_archive_dest_3=’service=swxstandby2 LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swxstandby2'
+*.LOG_ARCHIVE_DEST_STATE_1=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_2=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_3=’ENABLE’
+*.LOG_ARCHIVE_FORMAT=’log%t_%s_%r.arc’
+*.log_file_name_convert=’+DATA/SWXSTANDBY2/’,’+DATA/SWXSTANDBY/’,’+DATA/SWX/’,’+FRA/SWXSTANDBY2/’,’+FRA/SWXSTANDBY/’,’+FRA/SWX/’
+*.remote_login_passwordfile=’exclusive’
+*.STANDBY_FILE_MANAGEMENT=’AUTO’
+*.fal_client=’SWX’
+*.fal_server=’SWXSTANDBY2',’SWXSTANDBY’
+*.sec_case_sensitive_logon=FALSE
+########################################
+
+#########################STANDBY DATABASE PARAMETERS########################
+*.DB_UNIQUE_NAME=’SWXSTANDBY’
+*.db_file_name_convert=’+DATA/SWX/’,’+DATA/SWXSTANDBY/’,’+DATA/SWXSTANDBY2/’,’+FRA/SWX/’,’+FRA/SWXSTANDBY/’,’+FRA/SWXSTANDBY2/’
+*.log_archive_config=’dg_config=(swxstandby2,swxstandby,swx)’
+*.log_archive_dest_1=’LOCATION=+FRA valid_for=(ALL_LOGFILES,ALL_ROLES) db_unique_name=swxstandby’
+*.log_archive_dest_2=’service=swx LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swx’
+*.log_archive_dest_3=’service=swxstandby2 LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swxstandby2'
+*.LOG_ARCHIVE_DEST_STATE_1=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_2=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_3=’ENABLE’
+*.LOG_ARCHIVE_FORMAT=’log%t_%s_%r.arc’
+*.log_file_name_convert=’+DATA/SWX/’,’+DATA/SWXSTANDBY/’,’+DATA/SWXSTANDBY2/’,’+FRA/SWX/’,’+FRA/SWXSTANDBY/’,’+FRA/SWXSTANDBY2/’
+*.remote_login_passwordfile=’exclusive’
+*.STANDBY_FILE_MANAGEMENT=’AUTO’
+*.fal_client=’SWXSTANDBY’
+*.fal_server=’SWX’,’SWXSTANDBY2'
+*.sec_case_sensitive_logon=FALSE
+########################################
+
+#########################STANDBY DATABASE PARAMETERS########################
+*.DB_UNIQUE_NAME=’SWXSTANDBY2'
+*.db_file_name_convert=’+DATA/SWX/’,’+DATA/SWXSTANDBY/’,’+DATA/SWXSTANDBY2/’,’+FRA/SWX/’,’+FRA/SWXSTANDBY/’,’+FRA/SWXSTANDBY2/’
+*.log_archive_config=’dg_config=(swxstandby2,swxstandby,swx)’
+*.log_archive_dest_1=’LOCATION=+FRA valid_for=(ALL_LOGFILES,ALL_ROLES) db_unique_name=swxstandby2'
+*.log_archive_dest_2=’service=swx LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swx’
+*.log_archive_dest_3=’service=swxstandby LGWR ASYNC valid_for=(ONLINE_LOGFILE,PRIMARY_ROLE) db_unique_name=swxstandby’
+*.LOG_ARCHIVE_DEST_STATE_1=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_2=’ENABLE’
+*.LOG_ARCHIVE_DEST_STATE_3=’ENABLE’
+*.LOG_ARCHIVE_FORMAT=’log%t_%s_%r.arc’
+*.log_file_name_convert=’+DATA/SWX/’,’+DATA/SWXSTANDBY/’,’+DATA/SWXSTANDBY2/’,’+FRA/SWX/’,’+FRA/SWXSTANDBY/’,’+FRA/SWXSTANDBY2/’
+*.remote_login_passwordfile=’exclusive’
+*.STANDBY_FILE_MANAGEMENT=’AUTO’
+*.fal_client=’SWXSTANDBY2'
+*.fal_server=’SWX’,’SWXSTANDBY’
+*.sec_case_sensitive_logon=FALSE
+########################################
