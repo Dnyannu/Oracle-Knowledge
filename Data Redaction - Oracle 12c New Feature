@@ -1,0 +1,442 @@
+Data Redaction Oracle Database 12C release 1 (12.1)
+
+This new feature enables to easily prevent the display of sensitive data to end-users by performing redaction in each application. It’s very simple to implement and very efficient. Data are modified on the-fly right before results are returned to applications.
+
+1. on-the-fly redaction based on username, ip address, application context and other factors
+2. transparent, consistent enforcement in the database
+3. no measurable impact on production workloads
+4. appropriate for call centers, decision support systems, and systems with PII, PHI,and PCI data
+
+Data redaction is automatically turned off for following operations:
+• backup and restore
+• import and export
+• patching and upgrades
+• replication
+• sys connections are always exempt from redaction policies
+
+
+What is redaction policy
+
+Redaction policy specifies:
+
+1.  what to redact : specified by schema, object(table or view), and column
+2.  how to redact: specify a redaction method for the column and required parameters for that method
+3.  when to redact: specified by a SQL expression that is evaluated for all columns in the table or view and depends on values from:
+    * SYS_CONTEXT() for the database environment and context passed by applications
+    * XS_SYS_CONTEXT() for Oracle Real Application Security
+    * V() and NV() for Oracle Application Express
+    * dominates() for Oracle Label Security
+
+
+(NOTE – only one how to redact can be specified when you create the policy)
+
+ +++++++++++
+ |Test data|
+ +++++++++++
+ 
+First create a user to test the feature
+
+GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE 
+TO redact_user IDENTIFIED BY redact_user;
+
+--special dictionary redact views
+GRANT SELECT ON sys.redaction_policies TO redact_user;
+GRANT SELECT ON sys.redaction_columns TO redact_user;
+GRANT SELECT ON sys.redaction_values_for_type_full TO redact_user;
+
+--dedicated redact package
+GRANT EXECUTE ON dbms_redact TO redact_user;
+then create test table with test data
+
+CONNECT redact_user/redact_user
+
+CREATE TABLE test_tbl
+(
+  varchar2_id VARCHAR2(20),
+  number_id   NUMBER,
+  date_id     DATE,
+  clob_id     CLOB
+);
+
+INSERT INTO test_tbl
+VALUES
+(
+  'test varchar2',
+  102,
+  to_date('01.01.2014', 'DD.MM.YYYY'),
+  'test clob'
+);
+
+COMMIT;
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID   
+-------------------- ---------- -------- ----------
+test varchar2               102 14/01/01 test clob
+
+
+Redaction methods
+=================
+
+Following redaction methods will be presented
+
+1 .NONE – redaction is turned off.  Nothing to present.
+    10/11/2013 -> 10/11/2013
+    Some string -> Some string
+    33121333 -> 33121333
+
+2. FULL – columns are redacted to constant values based on the column data type
+    10/11/2013 -> 01/01/2011
+    Some string -> xxxxxxxxx
+    33121333 -> 23232323
+
+3. PARTIAL – user specified positions are replaced by a user specified character
+    516-17-7667 -> ***-**-7667
+    D1L2323L8K  -> D1******8K
+
+4. RANDOM – data type is preserved and different values are output each time
+    1311-3456-2398-0000 -> 3876-2871-4617-0284
+    17/08/2014 -> 09/01/1987
+
+5. REGULAR EXPRESSIONS – a “match and replace” is performed based on parameters
+    5512-2468 -> 5512-[hidden]
+    tomasz.lesinski@test.com -> [redacted]@test.com
+
+
+Managing Redaction Policies
+============================
+1. You can use package DBMS_REDACT to manage redact policies
+    * ADD_POLICY – add a redaction policy
+    * DROP_POLICY – drop a redaction policy
+    * ALTER_POLICY – change a redaction policy
+    * ENABLE_POLICY – enable a redaction policy after it is disabled
+    * DISABLE_POLICY – disable a redaction policy
+ 
+ 2. EXECUTE privileges is required to execute the procedures
+ 
+ 3. Enterprise Manager Cloud Control 12C  supports Oracle Data Redaction
+ 
+Defining a Redaction Policy
+============================
+To define redaction policy you need to use procedure DBMS_REDACT.ADD_POLICY
+
+Restrictions:
+
+• cannot redact SYS, nor SYSTEM schema objects
+• cannot redact VIRTUAL columns
+• cannot redact columns of specific data types
+• you can apply VPD policies on other columns then those redacted
+
+ ++++++++++++++++++
+ | FULL Redaction |
+ ++++++++++++++++++
+For this type redaction columns are redacted to constant values based on the column data type. Constant values are visible in view REDACTION_VALUES_FOR_TYPE_FULL for FULL redaction.
+
+SELECT
+  number_value,
+  binary_float_value,
+  binary_double_value,
+  char_value,
+  varchar_value,
+  nchar_value,
+  nvarchar_value,
+  date_value,
+  timestamp_value,
+  timestamp_with_time_zone_value,
+  blob_value,
+  clob_value,
+  nclob_value
+FROM 
+  redaction_values_for_type_full;
+
+NUMBER_VALUE BINARY_FLOAT_VALUE BINARY_DOUBLE_VALUE CHAR_VALUE 
+------------ ------------------ ------------------- ---------- 
+           0 0,0                0,0                            
+
+VARCHAR_VALUE NCHAR_VALUE NVARCHAR_VALUE DATE_VALUE 
+------------- ----------- -------------- ---------- 
+                                         01/01/01   
+        
+TIMESTAMP_VALUE             TIMESTAMP_WITH_TIME_ZONE_VALUE     
+--------------------------- ---------------------------------- 
+01/01/01 01:00:00,000000000 01/01/01 01:00:00,000000000 +00:00 
+
+BLOB_VALUE   CLOB_VALUE   NCLOB_VALUE  
+------------ ------------ --------------
+(BLOB)       [redacted]   [redacted]
+Add redaction on column VARCHAR2_ID
+
+BEGIN  
+  dbms_redact.add_policy
+  (
+    object_schema => 'REDACT_USER',
+    policy_name   => 'POLICY_NAME',
+    object_name   => 'TEST_TBL',
+    column_name   => 'VARCHAR2_ID',
+    expression    => 
+        'sys_context(''USERENV'', ''SESSION_USER'')=''REDACT_USER''',
+    function_type => dbms_redact.full
+  );
+END;
+/
+as you can notice now VARCHAR2_ID shows nothing
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID   
+-------------------- ---------- -------- ----------
+                            102 14/01/01 test clob
+UPDATE test_tbl
+SET varchar2_id='new data';
+
+COMMIT;
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID   
+-------------------- ---------- -------- ----------
+                            102 14/01/01 test clob
+
+
+Views REDACTION_POLICIES, REDACTION_COLUMNS
+===========================================
+
+Following views shows all details about defined redaction policies
+
+* REDACTION_POLICIES – keeps information about defined redact policies
+* REDACTION_COLUMNS – keeps detail information about affected columns by defined redact policies
+
+SELECT object_name, policy_name, expression FROM REDACTION_POLICIES;
+
+OBJECT_NAME POLICY_NAME
+----------- -----------
+TEST_TBL    POLICY_NAME
+
+EXPRESSION                                          
+----------------------------------------------------
+sys_context('USERENV', 'SESSION_USER')='REDACT_USER'
+SELECT object_name, column_name, function_type 
+FROM REDACTION_COLUMNS;
+
+OBJECT_NAME COLUMN_NAME FUNCTION_TYPE 
+----------- ----------- --------------
+TEST_TBL    VARCHAR2_ID FULL REDACTION
+
+
+Change default value for FULL redaction
+========================================
+
+With DBMS_REDACT.UPDATE_FULL_REDACTION_VALUES you can change default value for FULL redaction with procedure . You need to do it as sysdba.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!!! NOTE !!!- requires database restart to see it. !!! NOTE !!!
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+BEGIN 
+  dbms_redact.update_full_redaction_values(varchar_val => '*');
+  dbms_redact.update_full_redaction_values(number_val => -999);
+  dbms_redact.update_full_redaction_values(clob_val => 'clob_-999');
+END;
+/
+shutdown immediate;
+startup;
+
+SELECT varchar_value, number_value, clob_value 
+FROM redaction_values_for_type_full;
+
+VARCHAR_VALUE NUMBER_VALUE CLOB_VALUE 
+------------- ------------ -----------
+*                     -999 clob_-999
+So once database is restarted it should like this
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID   NUMBER_ID DATE_ID  CLOB_ID     
+------------ ---------- -------- ------------
+*                   102 14/01/01 test clob
+
+
+Drop a Redaction Policy
+========================
+To drop redaction policy you need to use procedure DBMS_REDACT.DROP_POLICY. NOTE – There can be only one police created for an object.
+
+BEGIN
+  DBMS_REDACT.DROP_POLICY 
+  (
+    object_schema => 'REDACT_USER',
+    object_name   => 'TEST_TBL',
+    policy_name   => 'POLICY_NAME'
+  );
+END;
+/
+
+
+PARTIAL Redaction
+=================
+For this type of redaction user specified positions are replaced by a user specified character.
+
+Example for VARCHAR column
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID  
+-------------------- ---------- -------- ---------
+new data                    102 14/01/01 test clob
+
+BEGIN
+  DBMS_REDACT.ADD_POLICY (
+   object_schema          => 'REDACT_USER',
+   object_name            => 'TEST_TBL',
+   policy_name            => 'POLICY_NAME',
+   column_name            => 'VARCHAR2_ID',
+   function_type          => DBMS_REDACT.PARTIAL,
+   function_parameters    => 'VVVFVVFVVVV,VVV-VV-VVVV,*,1,5',
+   expression             => '1=1',
+   enable                 => TRUE
+   );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID  
+-------------------- ---------- -------- ---------
+***-**-a                    102 14/01/01 test clob
+Example for number
+
+Procedure DBMS_REDACT.ALTER_POLICY can be used to modify current policy
+
+UPDATE test_tbl SET number_id=20142014;
+
+COMMIT;
+
+BEGIN
+  DBMS_REDACT.ALTER_POLICY (
+   object_schema          => 'REDACT_USER',
+   object_name            => 'TEST_TBL',
+   policy_name            => 'POLICY_NAME',
+   action                 => DBMS_REDACT.ADD_COLUMN,
+   column_name            => 'NUMBER_ID',
+   function_type          => DBMS_REDACT.PARTIAL,
+   function_parameters    => '9,1,5'
+   );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID           NUMBER_ID DATE_ID  CLOB_ID  
+-------------------- ---------- -------- ---------
+***-**-a               99999014 14/01/01 test clob
+
+
+REGULAR EXPRESSION Redaction
+============================
+
+BEGIN
+  DBMS_REDACT.DROP_POLICY 
+  (
+    object_schema => 'REDACT_USER',
+    object_name   => 'TEST_TBL',
+    policy_name   => 'POLICY_NAME'
+  );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID   NUMBER_ID DATE_ID             CLOB_ID   
+------------ ---------- ------------------- ----------
+new data       20142014 2014.01.01 00:00:00 test clob 
+
+BEGIN
+    DBMS_REDACT.ADD_POLICY (
+           object_schema          => 'REDACT_USER',
+           object_name            => 'TEST_TBL',
+           policy_name            => 'POLICY_NAME',
+           column_name            => 'VARCHAR2_ID',
+           function_type          => DBMS_REDACT.REGEXP,
+           expression             => '1=1',
+           enable                 => TRUE,
+           regexp_pattern         => '(.+) (.+)', 
+           regexp_replace_string  => '\2 \1',
+           regexp_position        => '1',
+           regexp_occurrence      => '0',
+           regexp_match_parameter => 'i' 
+   );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID   NUMBER_ID DATE_ID             CLOB_ID   
+------------ ---------- ------------------- ----------
+data new       20142014 2014.01.01 00:00:00 test clob
+
+
+RANDOM Redaction
+================
+
+For this policy random values are assigned
+
+BEGIN
+  DBMS_REDACT.DROP_POLICY 
+  (
+    object_schema => 'REDACT_USER',
+    object_name   => 'TEST_TBL',
+    policy_name   => 'POLICY_NAME'
+  );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID   NUMBER_ID DATE_ID             CLOB_ID   
+------------ ---------- ------------------- ----------
+new data       20142014 2014.01.01 00:00:00 test clob 
+
+BEGIN
+  DBMS_REDACT.ADD_POLICY 
+  (
+    object_schema          => 'REDACT_USER',
+    object_name            => 'TEST_TBL',
+    policy_name            => 'POLICY_NAME',
+    column_name            => 'VARCHAR2_ID',
+    function_type          => DBMS_REDACT.RANDOM,
+    expression             => '1=1',
+    ENABLE                 => TRUE
+  );
+END;
+/
+
+SELECT * FROM test_tbl;
+
+VARCHAR2_ID   NUMBER_ID DATE_ID             CLOB_ID    
+------------ ---------- ------------------- -----------
+E}U3cWq"       20142014 2014.01.01 00:00:00 test clob
+
+
++++++++++++++++++++++++++++++++++++++++++
+| Exempting Users from redaction policy |
++++++++++++++++++++++++++++++++++++++++++
+
+Howto exempt users:
+===================
+• conditions in policy expression can exclude users
+• SYS user is exempt from all redaction policies
+• grant EXEMPT REDACTION POLICY system privilege to exempt other users from all redaction policies
+• DBA role exempt users because EXP_FULL_DATABASE role has got system privilege EXEMPT REDACTION POLICY
+• special system privilege EXEMPT DDL REDACTION POLICY to execute DDL to exempt policies
+
+as user redact_user you can notice redacted objects will raise exception for DDL commands
+
+CREATE TABLE test_tbl1
+AS
+SELECT *  FROM test_tbl;
+
+ORA-28081: Insufficient privileges - the command references a redacted object.
+
+
+!@!@!@  HAVE A FUN  !@!@!@
+
