@@ -1,0 +1,96 @@
+In Database Archiving – Oracle 12c New Feature
+
+Let’s consider following points to understand “In Database Archiving” in depth:
+1.	What is “In Database Archiving”?
+2.	Benefits of “In Database Archiving”.
+3.	Implementation & Hands-on on In Database Archiving.
+
+What is “In Database Archiving”?
+-Most of the time, oracle enterprise databases(tables) are very large in size which has years & years of historical data. Very difficult in identifying current & old data, if any how we can manage to identify it, we can’t move it to Tape or Storage because we don’t know when these historical data will be needed for any reasons. If we managed to separate these as current and old data on tape or storage, In case of need, getting that data back in database will be very time-consuming process. Keeping large size database (unwanted at most time) over the years will directly affects database performance as well as increase time & CPU for database backup & restore.
+Information Life Cycle Management (ILM) called “In Database Archiving” is the smart new feature invented in oracle 12c, that enables to overcome above mentioned by archive rows within a table by marking them as inactive/invisible. These inactive marked rows will be archived within a table and not visible to application for the performance point of view, but in case of need we can alter them as visible.
+After enabling “In Database Archiving” for the table, one hidden column will be added to the table called: ORA_ARCHIVE_STATE. This column values (i.e. 0 & 1) will be responsible for marking row as current data or old data. Default value of ORA_ARCHIVE_STATE is set to be 0 for all rows, means current data. After deciding current and old data, old data will be archived/compressed and resulting database size & backup size will be reduced with db performance gain.
+This feature is very easy to implement as compared to identical feature like partitioning.
+
+Benefits of “In Database Archiving”:
+•	Compressed/Archive unwanted old data.
+•	Not visible or retrieve by application.
+•	improves Database performance.
+•	Improves Backup & restore performance.
+•	Easily identify current/new data.
+•	We can keep old data for a longer period within single database.
+
+Implementation & Hands-on on In Database Archiving:
+To enable “In-Database Archiving” for a table, we can enable ROW ARCHIVAL for the table OR Optionally, we can alter session parameter with ROW ARCHIVAL VISIBILITY to either ACTIVE or ALL.
+ 
+Implementation & Hands-on on “In Database Archiving”:
+Let’s consider following example to understand “In Database Archiving”
+ 
+// Employee table having 3 fields id, name & sal as below:
+SQL> create table emp (id number(5),name varchar2(30),sal number(7,2));
+Table created.
+ 
+// having 3 rows as below:
+SQL> insert into emp values(1,’abc’,40000);
+1 row created.
+SQL> insert into emp values(2,’pqr’,35000);
+1 row created.
+SQL> insert into emp values(3,’xyz’,70000);
+1 row created.
+SQL> select * from emp;
+ID NAME SAL
+———- —————————— ———-
+1 abc 40000
+2 pqr 35000
+3 xyz 70000
+ 
+// To convert table into “In Database Archive” mode, issue the following query:
+SQL> alter table emp row archival;
+Table altered.
+ 
+// Fetch all row with ORA_ARCHIVE_STATE pseudo column as below, all value of ORA_ARCHIVE_STATE coulumn is set to 0, means all are current data.
+SQL> column ORA_ARCHIVE_STATE format a15
+SQL> select ora_archive_state,id,name,sal from emp;
+ORA_ARCHIVE_STA ID NAME SAL
+————— ———- —————————— ———-
+0 1 abc 40000
+0 2 pqr 35000
+0 3 xyz 70000
+ 
+// Lets consider emp.id=1 is old data, and we need to mark emp.id=1 as archive, to do so issue the following update query:
+SQL> update emp set ORA_ARCHIVE_STATE=DBMS_ILM.ARCHIVESTATENAME(1) where id = 1;
+1 row updated.	
+ 
+// emp.id=1 is marked as archive, same row won’t be visible in table emp & ORA_ARCHIVE_STATE value is set to 1.
+// After archiving the row, emp.id=1 won’t be visible/fetch by following query:
+SQL> select ora_archive_state,id,name,sal from emp;
+ORA_ARCHIVE_STA ID NAME SAL
+————— ———- —————————— ———-
+0 2 pqr 35000
+0 3 xyz 70000
+ 
+// Let’s assume that we suddenly need of all old data that we were archive, to make it visible issue the following query:
+SQL> alter session set row archival visibility=all;
+Session altered.
+ 
+// By above, all archived data will be visible as below, with ORA_ARCHIVE_STATE value 1.
+SQL> select ora_archive_state,id,name,sal from emp;
+ORA_ARCHIVE_STA ID NAME SAL
+————— ———- —————————— ———-
+1 1 abc 40000
+0 2 pqr 35000
+0 3 xyz 70000
+ 
+// To make emp.id=1 row as current data, issue the following query:
+SQL> update emp set ORA_ARCHIVE_STATE=DBMS_ILM.ARCHIVESTATENAME(0) where id = 1;
+1 row updated.
+SQL> select ora_archive_state,id,name,sal from emp;
+ORA_ARCHIVE_STA ID NAME SAL
+————— ———- —————————— ———-
+0 1 abc 40000
+0 2 pqr 35000
+0 3 xyz 70000
+ 
+***********************************************************************
+Thanking you.
+Have a easy life ahead.
+
